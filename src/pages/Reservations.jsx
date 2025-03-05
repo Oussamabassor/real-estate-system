@@ -3,6 +3,31 @@ import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { reservationApi, propertyApi } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import {
+    CalendarDaysIcon,
+    CheckCircleIcon,
+    ClockIcon,
+    XCircleIcon,
+    BuildingOfficeIcon,
+    CurrencyDollarIcon,
+    FunnelIcon,
+    ArrowPathIcon,
+    ChevronRightIcon,
+} from '@heroicons/react/24/outline';
+
+const STATUS_COLORS = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    confirmed: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800',
+    completed: 'bg-blue-100 text-blue-800'
+};
+
+const STATUS_ICONS = {
+    pending: ClockIcon,
+    confirmed: CheckCircleIcon,
+    cancelled: XCircleIcon,
+    completed: CheckCircleIcon
+};
 
 export default function Reservations() {
     const { user } = useAuth();
@@ -10,6 +35,9 @@ export default function Reservations() {
     const [properties, setProperties] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeFilter, setActiveFilter] = useState('all');
+    const [showFilters, setShowFilters] = useState(false);
+    const [sortBy, setSortBy] = useState('date_desc');
 
     useEffect(() => {
         if (user) {
@@ -56,18 +84,25 @@ export default function Reservations() {
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'confirmed':
-                return 'bg-green-100 text-green-800';
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'cancelled':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
+    const filteredReservations = reservations
+        .filter(reservation => {
+            if (activeFilter === 'all') return true;
+            return reservation.status === activeFilter;
+        })
+        .sort((a, b) => {
+            switch (sortBy) {
+                case 'date_asc':
+                    return new Date(a.startDate) - new Date(b.startDate);
+                case 'date_desc':
+                    return new Date(b.startDate) - new Date(a.startDate);
+                case 'price_asc':
+                    return a.totalPrice - b.totalPrice;
+                case 'price_desc':
+                    return b.totalPrice - a.totalPrice;
+                default:
+                    return 0;
+            }
+        });
 
     if (!user) {
         return (
@@ -80,7 +115,7 @@ export default function Reservations() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+                <div className="loading-spinner h-12 w-12"></div>
             </div>
         );
     }
@@ -115,93 +150,182 @@ export default function Reservations() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
-                Your Reservations
-            </h1>
+        <div className="min-h-screen bg-gray-50">
+            {/* Header */}
+            <div className="bg-white shadow">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="md:flex md:items-center md:justify-between">
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+                                My Reservations
+                            </h1>
+                            <p className="mt-2 text-sm text-gray-500">
+                                {filteredReservations.length} reservations found
+                            </p>
+                        </div>
+                        <div className="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+                            <button
+                                onClick={() => setShowFilters(!showFilters)}
+                                className="btn btn-secondary inline-flex items-center"
+                            >
+                                <FunnelIcon className="h-5 w-5 mr-2" />
+                                Filters
+                            </button>
+                            <button
+                                onClick={fetchReservations}
+                                className="btn btn-secondary inline-flex items-center"
+                            >
+                                <ArrowPathIcon className="h-5 w-5 mr-2" />
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
 
-            <div className="space-y-6">
-                {reservations.map((reservation) => {
-                    const property = properties[reservation.propertyId];
-                    if (!property) return null;
-
-                    return (
-                        <div
-                            key={reservation.id}
-                            className="bg-white shadow rounded-lg overflow-hidden"
-                        >
-                            <div className="p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-xl font-semibold text-gray-900">
-                                        <Link
-                                            to={`/properties/${property.id}`}
-                                            className="hover:text-primary-600"
-                                        >
-                                            {property.title}
-                                        </Link>
-                                    </h2>
-                                    <span
-                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                                            reservation.status
-                                        )}`}
-                                    >
-                                        {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-4">
-                                    <div>
-                                        <h3 className="text-sm font-medium text-gray-500">Check-in</h3>
-                                        <p className="mt-1 text-sm text-gray-900">
-                                            {new Date(reservation.startDate).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-medium text-gray-500">Check-out</h3>
-                                        <p className="mt-1 text-sm text-gray-900">
-                                            {new Date(reservation.endDate).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-medium text-gray-500">Total Price</h3>
-                                        <p className="mt-1 text-sm text-gray-900">
-                                            ${reservation.totalPrice.toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-medium text-gray-500">Payment Method</h3>
-                                        <p className="mt-1 text-sm text-gray-900">
-                                            {reservation.paymentMethod.replace('_', ' ').charAt(0).toUpperCase() +
-                                                reservation.paymentMethod.slice(1)}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between border-t pt-4">
-                                    <div className="text-sm text-gray-500">
-                                        Reservation ID: {reservation.id}
-                                    </div>
-                                    <div className="space-x-4">
-                                        <Link
-                                            to={`/properties/${property.id}`}
-                                            className="btn btn-secondary btn-sm"
-                                        >
-                                            View Property
-                                        </Link>
-                                        {reservation.status === 'pending' && (
-                                            <button
-                                                onClick={() => handleCancelReservation(reservation.id)}
-                                                className="btn btn-danger btn-sm"
-                                            >
-                                                Cancel Reservation
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
+                    {/* Filters */}
+                    <div className={`mt-6 transition-all duration-300 ${showFilters ? 'block' : 'hidden'}`}>
+                        <div className="bg-white rounded-lg shadow-sm p-4">
+                            <div className="flex flex-wrap gap-4">
+                                <button
+                                    onClick={() => setActiveFilter('all')}
+                                    className={`btn ${activeFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+                                >
+                                    All
+                                </button>
+                                <button
+                                    onClick={() => setActiveFilter('confirmed')}
+                                    className={`btn ${activeFilter === 'confirmed' ? 'btn-primary' : 'btn-secondary'}`}
+                                >
+                                    Confirmed
+                                </button>
+                                <button
+                                    onClick={() => setActiveFilter('pending')}
+                                    className={`btn ${activeFilter === 'pending' ? 'btn-primary' : 'btn-secondary'}`}
+                                >
+                                    Pending
+                                </button>
+                                <button
+                                    onClick={() => setActiveFilter('cancelled')}
+                                    className={`btn ${activeFilter === 'cancelled' ? 'btn-primary' : 'btn-secondary'}`}
+                                >
+                                    Cancelled
+                                </button>
+                                <button
+                                    onClick={() => setActiveFilter('completed')}
+                                    className={`btn ${activeFilter === 'completed' ? 'btn-primary' : 'btn-secondary'}`}
+                                >
+                                    Completed
+                                </button>
+                            </div>
+                            <div className="mt-4">
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="input-field"
+                                >
+                                    <option value="date_desc">Date: Newest First</option>
+                                    <option value="date_asc">Date: Oldest First</option>
+                                    <option value="price_desc">Price: High to Low</option>
+                                    <option value="price_asc">Price: Low to High</option>
+                                </select>
                             </div>
                         </div>
-                    );
-                })}
+                    </div>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {error ? (
+                    <div className="text-center text-red-500">
+                        <XCircleIcon className="mx-auto h-12 w-12" />
+                        <h3 className="mt-2 text-sm font-medium">{error}</h3>
+                    </div>
+                ) : filteredReservations.length === 0 ? (
+                    <div className="text-center">
+                        <BuildingOfficeIcon className="mx-auto h-12 w-12 text-gray-400" />
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No reservations found</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                            {activeFilter === 'all'
+                                ? "You haven't made any reservations yet."
+                                : "No reservations match the selected filter."}
+                        </p>
+                        <div className="mt-6">
+                            <Link to="/properties" className="btn btn-primary">
+                                Browse Properties
+                            </Link>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {filteredReservations.map((reservation, index) => {
+                            const property = properties[reservation.propertyId];
+                            if (!property) return null;
+
+                            const StatusIcon = STATUS_ICONS[reservation.status];
+                            return (
+                                <div
+                                    key={reservation.id}
+                                    className="bg-white rounded-lg shadow-sm overflow-hidden transition-all hover:shadow-md"
+                                    style={{ animationDelay: `${index * 100}ms` }}
+                                >
+                                    <div className="p-6">
+                                        <div className="flex items-center justify-between flex-wrap gap-4">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="flex-shrink-0">
+                                                    <img
+                                                        src={property.images[0]}
+                                                        alt={property.title}
+                                                        className="h-16 w-16 rounded-lg object-cover"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-lg font-semibold text-gray-900">
+                                                        {property.title}
+                                                    </h3>
+                                                    <div className="mt-1 flex items-center space-x-2 text-sm text-gray-500">
+                                                        <CalendarDaysIcon className="h-5 w-5" />
+                                                        <span>
+                                                            {new Date(reservation.startDate).toLocaleDateString()} - {new Date(reservation.endDate).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center space-x-4">
+                                                <div className="text-right">
+                                                    <div className="flex items-center space-x-2">
+                                                        <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
+                                                        <span className="text-lg font-semibold text-gray-900">
+                                                            ${reservation.totalPrice.toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                    <div className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[reservation.status]}`}>
+                                                        <StatusIcon className="h-4 w-4 mr-1" />
+                                                        {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
+                                                    </div>
+                                                </div>
+                                                <Link
+                                                    to={`/properties/${property.id}`}
+                                                    className="btn btn-secondary"
+                                                >
+                                                    View Property
+                                                    <ChevronRightIcon className="h-5 w-5 ml-2" />
+                                                </Link>
+                                                {reservation.status === 'pending' && (
+                                                    <button
+                                                        onClick={() => handleCancelReservation(reservation.id)}
+                                                        className="btn btn-danger"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );

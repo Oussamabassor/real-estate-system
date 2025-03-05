@@ -1,43 +1,114 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useAuth } from './hooks/useAuth';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Properties from './pages/Properties';
 import PropertyDetails from './pages/PropertyDetails';
+import Reservations from './pages/Reservations';
+import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Profile from './pages/Profile';
-import Reservations from './pages/Reservations';
-import { useAuth } from './hooks/useAuth';
+import NotFound from './pages/NotFound';
+import { Toaster } from 'react-hot-toast';
+import LoadingScreen from './components/LoadingScreen';
 
 function App() {
-    const { loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [pageLoading, setPageLoading] = useState(true);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
-            </div>
-        );
+  useEffect(() => {
+    // Simulate initial page load
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Protected route wrapper
+  const ProtectedRoute = ({ children }) => {
+    if (!user) {
+      return <Navigate to="/login" />;
     }
+    return children;
+  };
 
-    return (
-        <Router>
-            <div className="min-h-screen bg-gray-50">
-                <Navbar />
-                <main className="container mx-auto px-4 py-8">
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/properties" element={<Properties />} />
-                        <Route path="/properties/:id" element={<PropertyDetails />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
-                        <Route path="/profile" element={<Profile />} />
-                        <Route path="/reservations" element={<Reservations />} />
-                    </Routes>
-                </main>
-            </div>
-        </Router>
-    );
+  if (pageLoading || authLoading) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <Router>
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        {/* Toast Notifications */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#333',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#4ade80',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 5000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
+
+        {/* Navigation */}
+        <Navbar />
+
+        {/* Main Content */}
+        <main className="flex-grow">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/properties" element={<Properties />} />
+            <Route path="/properties/:id" element={<PropertyDetails />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+
+            {/* Protected Routes */}
+            <Route
+              path="/reservations"
+              element={
+                <ProtectedRoute>
+                  <Reservations />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 404 Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+
+        {/* Footer */}
+        <Footer />
+      </div>
+    </Router>
+  );
 }
 
-export default App; 
+export default App;
