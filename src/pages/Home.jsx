@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { propertyApi } from '../services/api';
+import { propertyService } from '../services/propertyService';
 import PropertyCard from '../components/PropertyCard';
 import {
     HomeIcon,
@@ -28,11 +28,12 @@ export default function Home() {
     const fetchFeaturedProperties = async () => {
         try {
             setLoading(true);
-            const { data } = await propertyApi.getAll();
-            setFeaturedProperties(data.slice(0, 6));
+            const response = await propertyService.getAll(1, 6);
+            setFeaturedProperties(response.data);
             setError(null);
         } catch (err) {
-            setError('Failed to load featured properties');
+            console.error('Failed to fetch featured properties:', err);
+            setError(err.message || 'Failed to load featured properties');
         } finally {
             setLoading(false);
         }
