@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { propertyService } from '../services/propertyService';
 import PropertyCard from '../components/PropertyCard';
 import {
@@ -11,32 +12,70 @@ import {
     ShieldCheckIcon,
     ArrowRightIcon,
     MapPinIcon,
-    CurrencyDollarIcon
+    CurrencyDollarIcon,
+    UserCircleIcon,
+    PhoneIcon,
+    ChevronDownIcon
 } from '@heroicons/react/24/outline';
+import { useLanguage } from '../context/LanguageContext';
+import api from '../services/api';
+import LoadingScreen from '../components/LoadingScreen';
 
 export default function Home() {
+    const { t } = useLanguage();
     const [featuredProperties, setFeaturedProperties] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [propertyType, setPropertyType] = useState('all');
+    const [stats, setStats] = useState({
+        properties: 0,
+        clients: 0,
+        cities: 0,
+        agents: 0
+    });
+    const [isScrolled, setIsScrolled] = useState(false);
+    const heroRef = useRef(null);
+    const { scrollY } = useScroll();
+    const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+    const y = useTransform(scrollY, [0, 300], [0, 100]);
 
     useEffect(() => {
-        fetchFeaturedProperties();
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 50);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const fetchFeaturedProperties = async () => {
-        try {
-            setLoading(true);
-            const response = await propertyService.getAll(1, 6);
-            setFeaturedProperties(response.data);
-            setError(null);
-        } catch (err) {
-            console.error('Failed to fetch featured properties:', err);
-            setError(err.message || 'Failed to load featured properties');
-        } finally {
-            setLoading(false);
-        }
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const propertiesResponse = await api.get('/properties/featured');
+                setFeaturedProperties(propertiesResponse.data);
+
+                const statsResponse = await api.get('/stats');
+                setStats(statsResponse.data);
+
+            } catch (err) {
+                console.error('Error fetching data:', err);
+                setError(err.message || 'Une erreur est survenue lors du chargement des données');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const scrollToContent = () => {
+        window.scrollTo({
+            top: window.innerHeight,
+            behavior: 'smooth'
+        });
     };
 
     const filteredProperties = featuredProperties.filter(property => {
@@ -46,232 +85,410 @@ export default function Home() {
         return matchesSearch && matchesType;
     });
 
-    const stats = [
-        { label: 'Properties Listed', value: '2,000+', icon: HomeIcon },
-        { label: 'Happy Clients', value: '10,000+', icon: UserGroupIcon },
-        { label: 'Cities Covered', value: '50+', icon: MapPinIcon },
-        { label: 'Successful Deals', value: '15,000+', icon: CurrencyDollarIcon },
-    ];
-
     if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="loading-spinner h-12 w-12"></div>
-            </div>
-        );
+        return <LoadingScreen />;
     }
 
-    if (error) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-red-500">{error}</div>
-            </div>
-        );
-    }
+    // if (error) {
+    //     return (
+    //         <motion.div
+    //             initial={{ opacity: 0 }}
+    //             animate={{ opacity: 1 }}
+    //             className="flex items-center justify-center min-h-screen bg-gray-50"
+    //         >
+    //             <div className="text-center">
+    //                 <h2 className="mb-4 text-2xl font-semibold text-gray-900">
+    //                     {t('common.error')}
+    //                 </h2>
+    //                 <p className="mb-4 text-gray-600">{error}</p>
+    //                 <motion.button
+    //                     whileHover={{ scale: 1.05 }}
+    //                     whileTap={{ scale: 0.95 }}
+    //                     onClick={() => window.location.reload()}
+    //                     className="px-4 py-2 text-white transition-colors rounded-md bg-primary-600 hover:bg-primary-700"
+    //                 >
+    //                     {t('common.retry')}
+    //                 </motion.button>
+    //             </div>
+    //         </motion.div>
+    //     );
+    // }
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-gray-50">
             {/* Hero Section */}
-            <div className="relative bg-gradient-to-r from-gray-900 to-gray-800">
+            <motion.div
+                ref={heroRef}
+                className="relative min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-primary-900"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1 }}
+            >
+                {/* Animated Background */}
                 <div className="absolute inset-0 overflow-hidden">
-                    <img
-                        className="w-full h-full object-cover opacity-40"
-                        src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80"
-                        alt="Real Estate"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-transparent mix-blend-multiply"></div>
-                </div>
-                <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
-                    <div className="md:ml-auto md:w-1/2 md:pl-10">
-                        <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl animate-fade-in">
-                            Find Your Dream Home
-                        </h1>
-                        <p className="mt-6 text-xl text-gray-300 max-w-3xl animate-slide-up">
-                            Discover the perfect property from our extensive collection of luxury homes, apartments, and bungalows.
-                        </p>
+                    <motion.div
+                        initial={{ scale: 1.2, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 0.4 }}
+                        transition={{ duration: 2, ease: "easeOut" }}
+                        className="absolute inset-0"
+                    >
+                        <img
+                            className="object-cover w-full h-full"
+                            src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80"
+                            alt="Real Estate"
+                        />
+                    </motion.div>
 
-                        <div className="mt-10 max-w-xl animate-slide-up">
-                            <div className="flex flex-col sm:flex-row gap-4">
+                    {/* Animated Gradient Overlay */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1.5 }}
+                        className="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-800/80 to-primary-900/90"
+                    />
+
+                    {/* Animated Background Shapes */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.1 }}
+                        transition={{ duration: 2 }}
+                        className="absolute inset-0"
+                    >
+                        <div className="absolute top-0 left-0 w-96 h-96 bg-primary-500 rounded-full filter blur-3xl"></div>
+                        <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary-500 rounded-full filter blur-3xl"></div>
+                    </motion.div>
+                </div>
+
+                {/* Content */}
+                <div className="relative px-4 py-24 mx-auto max-w-7xl sm:py-32 sm:px-6 lg:px-8">
+                    <motion.div
+                        className="md:ml-auto md:w-1/2 md:pl-10"
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5, duration: 0.8 }}
+                    >
+                        {/* Title with Gradient Text */}
+                        <motion.h1
+                            className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.7, duration: 0.8 }}
+                        >
+                            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white to-primary-200">
+                                {t('home.hero.title')}
+                            </span>
+                        </motion.h1>
+
+                        {/* Subtitle with Fade In */}
+                        <motion.p
+                            className="max-w-3xl mt-6 text-xl text-gray-300"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.9, duration: 0.8 }}
+                        >
+                            {t('home.hero.subtitle')}
+                        </motion.p>
+
+                        {/* Search Section */}
+                        <motion.div
+                            className="max-w-xl mt-10"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 1.1, duration: 0.8 }}
+                        >
+                            <div className="flex flex-col gap-4 sm:flex-row">
                                 <div className="flex-1">
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                                    <div className="relative group">
+                                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 transition-colors group-hover:text-primary-500" />
                                         </div>
                                         <input
                                             type="text"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="input-field pl-10"
-                                            placeholder="Search properties..."
+                                            className="w-full pl-10 pr-4 py-3 text-white bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 transition-all duration-300"
+                                            placeholder={t('home.hero.search.locationPlaceholder')}
                                         />
                                     </div>
                                 </div>
                                 <select
                                     value={propertyType}
                                     onChange={(e) => setPropertyType(e.target.value)}
-                                    className="input-field"
+                                    className="w-full px-4 py-3 text-white bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
                                 >
-                                    <option value="all">All Types</option>
-                                    <option value="apartment">Apartments</option>
-                                    <option value="bungalow">Bungalows</option>
+                                    <option value="all">{t('common.select')}</option>
+                                    <option value="apartment">{t('propertyTypes.apartment')}</option>
+                                    <option value="bungalow">{t('propertyTypes.bungalow')}</option>
                                 </select>
-                                <Link
-                                    to="/properties"
-                                    className="btn btn-primary inline-flex items-center justify-center whitespace-nowrap"
+                                <motion.div
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
                                 >
-                                    Search
-                                    <ArrowRightIcon className="ml-2 h-5 w-5" />
-                                </Link>
+                                    <Link
+                                        to="/properties"
+                                        className="inline-flex items-center justify-center w-full px-6 py-3 text-white transition-all duration-300 bg-primary-600 rounded-lg hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-500/25"
+                                    >
+                                        {t('home.hero.search.search')}
+                                        <ArrowRightIcon className="w-5 h-5 ml-2" />
+                                    </Link>
+                                </motion.div>
                             </div>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
                 </div>
-            </div>
+
+                {/* Scroll Indicator */}
+                <motion.div
+                    className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.5, duration: 0.8 }}
+                >
+                    <motion.button
+                        onClick={scrollToContent}
+                        className="p-3 text-white transition-colors rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20"
+                        animate={{
+                            y: [0, 10, 0],
+                            opacity: [0.7, 1, 0.7]
+                        }}
+                        transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                    >
+                        <ChevronDownIcon className="w-6 h-6" />
+                    </motion.button>
+                </motion.div>
+            </motion.div>
 
             {/* Stats Section */}
-            <div className="bg-white py-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-                        {stats.map((stat, index) => (
-                            <div
-                                key={stat.label}
-                                className="card p-6 text-center animate-fade-in"
-                                style={{ animationDelay: `${index * 100}ms` }}
+            <motion.div
+                className="py-20 bg-white"
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+            >
+                <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+                        {[
+                            { icon: BuildingOfficeIcon, value: stats.properties, label: t('home.stats.properties') },
+                            { icon: UserGroupIcon, value: stats.clients, label: t('home.stats.clients') },
+                            { icon: MapPinIcon, value: stats.cities, label: t('home.stats.cities') },
+                            { icon: UserCircleIcon, value: stats.agents, label: t('home.stats.agents') }
+                        ].map((stat, index) => (
+                            <motion.div
+                                key={index}
+                                className="p-6 transition-all duration-300 card group hover:shadow-xl"
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.1 }}
                             >
-                                <div className="mx-auto h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center">
-                                    <stat.icon className="h-6 w-6 text-primary-600" />
+                                <div className="flex items-center justify-center w-12 h-12 mb-4 transition-colors rounded-full bg-primary-100 group-hover:bg-primary-200">
+                                    <stat.icon className="w-6 h-6 text-primary-600" />
                                 </div>
-                                <div className="mt-3">
-                                    <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
-                                    <p className="text-sm text-gray-500">{stat.label}</p>
-                                </div>
-                            </div>
+                                <h3 className="mb-2 text-2xl font-bold text-gray-900">{stat.value}</h3>
+                                <p className="text-gray-600">{stat.label}</p>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Featured Properties */}
-            <div className="bg-gray-50 py-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-12">
+            <motion.div
+                className="py-20 bg-gray-50"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+            >
+                <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <motion.div
+                        className="mb-12 text-center"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
                         <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-                            Featured Properties
+                            {t('home.featured.title')}
                         </h2>
                         <p className="mt-3 text-xl text-gray-500">
-                            Discover our hand-picked selection of premium properties
+                            {t('home.featured.subtitle')}
                         </p>
-                    </div>
+                    </motion.div>
 
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
                         {filteredProperties.map((property, index) => (
-                            <div
+                            <motion.div
                                 key={property.id}
-                                className="animate-fade-in"
-                                style={{ animationDelay: `${index * 100}ms` }}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.1 }}
+                                className="group"
                             >
                                 <PropertyCard property={property} />
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
 
                     {filteredProperties.length === 0 && (
-                        <div className="text-center py-12">
-                            <BuildingOfficeIcon className="mx-auto h-12 w-12 text-gray-400" />
+                        <motion.div
+                            className="py-12 text-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                        >
+                            <BuildingOfficeIcon className="w-12 h-12 mx-auto text-gray-400" />
                             <h3 className="mt-2 text-sm font-medium text-gray-900">No properties found</h3>
                             <p className="mt-1 text-sm text-gray-500">
                                 Try adjusting your search criteria
                             </p>
-                        </div>
+                        </motion.div>
                     )}
 
                     {filteredProperties.length > 0 && (
-                        <div className="mt-12 text-center">
-                            <Link
-                                to="/properties"
-                                className="btn btn-primary inline-flex items-center"
+                        <motion.div
+                            className="mt-12 text-center"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                        >
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                             >
-                                View All Properties
-                                <ArrowRightIcon className="ml-2 h-5 w-5" />
-                            </Link>
-                        </div>
+                                <Link
+                                    to="/properties"
+                                    className="inline-flex items-center btn btn-primary"
+                                >
+                                    View All Properties
+                                    <ArrowRightIcon className="w-5 h-5 ml-2" />
+                                </Link>
+                            </motion.div>
+                        </motion.div>
                     )}
                 </div>
-            </div>
+            </motion.div>
 
             {/* Features Section */}
-            <div className="bg-white py-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-12">
+            <motion.div
+                className="py-20 bg-white"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+            >
+                <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <motion.div
+                        className="mb-12 text-center"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
                         <h2 className="text-3xl font-extrabold text-gray-900">
-                            Why Choose Us
+                            {t('home.features.title')}
                         </h2>
                         <p className="mt-4 text-lg text-gray-500">
-                            Experience the best in real estate services
+                            {t('home.features.subtitle')}
                         </p>
-                    </div>
+                    </motion.div>
 
                     <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                        <div className="card p-6 animate-fade-in">
-                            <div className="h-12 w-12 rounded-md bg-primary-100 flex items-center justify-center">
-                                <HomeIcon className="h-6 w-6 text-primary-600" />
-                            </div>
-                            <h3 className="mt-4 text-lg font-medium text-gray-900">Wide Range of Properties</h3>
-                            <p className="mt-2 text-base text-gray-500">
-                                Choose from our extensive collection of apartments and bungalows.
-                            </p>
-                        </div>
-
-                        <div className="card p-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
-                            <div className="h-12 w-12 rounded-md bg-primary-100 flex items-center justify-center">
-                                <ShieldCheckIcon className="h-6 w-6 text-primary-600" />
-                            </div>
-                            <h3 className="mt-4 text-lg font-medium text-gray-900">Secure Transactions</h3>
-                            <p className="mt-2 text-base text-gray-500">
-                                Simple and secure reservation process with multiple payment options.
-                            </p>
-                        </div>
-
-                        <div className="card p-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
-                            <div className="h-12 w-12 rounded-md bg-primary-100 flex items-center justify-center">
-                                <UserGroupIcon className="h-6 w-6 text-primary-600" />
-                            </div>
-                            <h3 className="mt-4 text-lg font-medium text-gray-900">24/7 Support</h3>
-                            <p className="mt-2 text-base text-gray-500">
-                                Our dedicated support team is always ready to help you.
-                            </p>
-                        </div>
+                        {[
+                            {
+                                icon: MagnifyingGlassIcon,
+                                title: t('home.features.items.search'),
+                                description: t('home.features.items.searchDescription')
+                            },
+                            {
+                                icon: PhoneIcon,
+                                title: t('home.features.items.support'),
+                                description: t('home.features.items.supportDescription')
+                            },
+                            {
+                                icon: ShieldCheckIcon,
+                                title: t('home.features.items.security'),
+                                description: t('home.features.items.securityDescription')
+                            }
+                        ].map((feature, index) => (
+                            <motion.div
+                                key={index}
+                                className="p-6 transition-all duration-300 card group hover:shadow-xl"
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.1 }}
+                            >
+                                <div className="flex items-center justify-center w-12 h-12 mb-4 transition-colors rounded-md bg-primary-100 group-hover:bg-primary-200">
+                                    <feature.icon className="w-6 h-6 text-primary-600" />
+                                </div>
+                                <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                                    {feature.title}
+                                </h3>
+                                <p className="text-gray-600">
+                                    {feature.description}
+                                </p>
+                            </motion.div>
+                        ))}
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* CTA Section */}
-            <div className="bg-primary-700">
-                <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
-                    <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                        <span className="block">Ready to find your dream home?</span>
-                        <span className="block text-primary-200">Get started today.</span>
-                    </h2>
-                    <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
-                        <div className="inline-flex rounded-md shadow">
+            <motion.div
+                className="bg-primary-700"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+            >
+                <div className="px-4 py-20 mx-auto max-w-7xl sm:px-6 lg:py-24 lg:px-8 lg:flex lg:items-center lg:justify-between">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                            <span className="block">{t('home.cta.title')}</span>
+                            <span className="block text-primary-200">{t('home.cta.subtitle')}</span>
+                        </h2>
+                    </motion.div>
+                    <motion.div
+                        className="flex mt-8 lg:mt-0 lg:flex-shrink-0"
+                        initial={{ opacity: 0, x: 20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <motion.div
+                            className="inline-flex rounded-md shadow"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
                             <Link
                                 to="/properties"
-                                className="btn bg-white hover:bg-gray-50 text-primary-600"
+                                className="bg-white btn hover:bg-gray-50 text-primary-600"
                             >
-                                Browse Properties
+                                {t('home.cta.form.send')}
                             </Link>
-                        </div>
-                        <div className="ml-3 inline-flex rounded-md shadow">
+                        </motion.div>
+                        <motion.div
+                            className="inline-flex ml-3 rounded-md shadow"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
                             <Link
                                 to="/contact"
                                 className="btn btn-secondary"
                             >
-                                Contact Us
+                                {t('home.cta.form.send')}
                             </Link>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 }
