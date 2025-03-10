@@ -119,7 +119,8 @@ export default function Home() {
             {/* Hero Section */}
             <motion.div
                 ref={heroRef}
-                className="relative min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-primary-900"
+                className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-primary-900"
+                style={{ minHeight: '80vh' }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 1 }}
@@ -139,49 +140,49 @@ export default function Home() {
                         />
                     </motion.div>
 
-                    {/* Animated Gradient Overlay */}
+                    {/* Improved Gradient Overlay */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 1.5 }}
-                        className="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-800/80 to-primary-900/90"
+                        className="absolute inset-0 bg-gradient-to-r from-gray-900/95 via-gray-800/90 to-primary-900/95"
                     />
 
-                    {/* Animated Background Shapes */}
+                    {/* Enhanced Background Shapes */}
                     <motion.div
                         initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.1 }}
+                        animate={{ opacity: 0.15 }}
                         transition={{ duration: 2 }}
                         className="absolute inset-0"
                     >
-                        <div className="absolute top-0 left-0 w-96 h-96 bg-primary-500 rounded-full filter blur-3xl"></div>
-                        <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary-500 rounded-full filter blur-3xl"></div>
+                        <div className="absolute top-0 left-0 w-96 h-96 bg-primary-500 rounded-full filter blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+                        <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary-500 rounded-full filter blur-3xl transform translate-x-1/2 translate-y-1/2"></div>
                     </motion.div>
                 </div>
 
                 {/* Content */}
-                <div className="relative px-4 py-24 mx-auto max-w-7xl sm:py-32 sm:px-6 lg:px-8">
+                <div className="relative px-4 py-16 mx-auto max-w-7xl sm:py-24 sm:px-6 lg:px-8">
                     <motion.div
-                        className="md:ml-auto md:w-1/2 md:pl-10"
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
+                        className="text-center max-w-3xl mx-auto"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5, duration: 0.8 }}
                     >
-                        {/* Title with Gradient Text */}
+                        {/* Title with Enhanced Gradient */}
                         <motion.h1
-                            className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl"
+                            className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl mb-6"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.7, duration: 0.8 }}
                         >
-                            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white to-primary-200">
+                            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white via-primary-200 to-white">
                                 {t('home.hero.title')}
                             </span>
                         </motion.h1>
 
-                        {/* Subtitle with Fade In */}
+                        {/* Subtitle with Enhanced Style */}
                         <motion.p
-                            className="max-w-3xl mt-6 text-xl text-gray-300"
+                            className="max-w-2xl mx-auto mt-6 text-xl text-gray-300/90 leading-relaxed"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.9, duration: 0.8 }}
@@ -189,55 +190,65 @@ export default function Home() {
                             {t('home.hero.subtitle')}
                         </motion.p>
 
-                        {/* Search Section */}
+                        {/* Improved Search Section */}
                         <motion.div
-                            className="max-w-xl mt-10"
+                            className="max-w-2xl mx-auto mt-10"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 1.1, duration: 0.8 }}
                         >
-                            <div className="flex flex-col gap-4 sm:flex-row">
-                                <div className="flex-1">
-                                    <div className="relative group">
-                                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 transition-colors group-hover:text-primary-500" />
+                            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 shadow-xl">
+                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                                    <div className="sm:col-span-5">
+                                        <div className="relative group">
+                                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                                <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 transition-colors group-hover:text-primary-500" />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-3 text-white bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 transition-all duration-300"
+                                                placeholder={t('home.hero.search.locationPlaceholder')}
+                                            />
                                         </div>
-                                        <input
-                                            type="text"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 text-white bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 transition-all duration-300"
-                                            placeholder={t('home.hero.search.locationPlaceholder')}
-                                        />
+                                    </div>
+                                    <div className="sm:col-span-4">
+                                        <div className="relative">
+                                            <select
+                                                value={propertyType}
+                                                onChange={(e) => setPropertyType(e.target.value)}
+                                                className="w-full px-4 py-3 text-white appearance-none bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                                            >
+                                                <option value="all" className="text-gray-900">{t('common.select')}</option>
+                                                <option value="apartment" className="text-gray-900">{t('propertyTypes.apartment')}</option>
+                                                <option value="bungalow" className="text-gray-900">{t('propertyTypes.bungalow')}</option>
+                                            </select>
+                                            <ChevronDownIcon className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                                        </div>
+                                    </div>
+                                    <div className="sm:col-span-3">
+                                        <motion.div
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            className="h-full"
+                                        >
+                                            <Link
+                                                to="/properties"
+                                                className="flex items-center justify-center w-full h-full px-6 py-3 text-white font-medium transition-all duration-300 bg-primary-600 rounded-xl hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-500/25"
+                                            >
+                                                {t('home.hero.search.search')}
+                                                <ArrowRightIcon className="w-5 h-5 ml-2" />
+                                            </Link>
+                                        </motion.div>
                                     </div>
                                 </div>
-                                <select
-                                    value={propertyType}
-                                    onChange={(e) => setPropertyType(e.target.value)}
-                                    className="w-full px-4 py-3 text-white bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
-                                >
-                                    <option value="all">{t('common.select')}</option>
-                                    <option value="apartment">{t('propertyTypes.apartment')}</option>
-                                    <option value="bungalow">{t('propertyTypes.bungalow')}</option>
-                                </select>
-                                <motion.div
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <Link
-                                        to="/properties"
-                                        className="inline-flex items-center justify-center w-full px-6 py-3 text-white transition-all duration-300 bg-primary-600 rounded-lg hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-500/25"
-                                    >
-                                        {t('home.hero.search.search')}
-                                        <ArrowRightIcon className="w-5 h-5 ml-2" />
-                                    </Link>
-                                </motion.div>
                             </div>
                         </motion.div>
                     </motion.div>
                 </div>
 
-                {/* Scroll Indicator */}
+                {/* Improved Scroll Indicator */}
                 <motion.div
                     className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
                     initial={{ opacity: 0, y: 20 }}
@@ -246,18 +257,17 @@ export default function Home() {
                 >
                     <motion.button
                         onClick={scrollToContent}
-                        className="p-3 text-white transition-colors rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20"
+                        className="p-3 text-white transition-all duration-300 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:shadow-lg group"
                         animate={{
                             y: [0, 10, 0],
-                            opacity: [0.7, 1, 0.7]
                         }}
                         transition={{
                             duration: 2,
                             repeat: Infinity,
-                            ease: "easeInOut"
+                            ease: "easeInOut",
                         }}
                     >
-                        <ChevronDownIcon className="w-6 h-6" />
+                        <ChevronDownIcon className="w-6 h-6 transition-transform group-hover:transform group-hover:translate-y-1" />
                     </motion.button>
                 </motion.div>
             </motion.div>

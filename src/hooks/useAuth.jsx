@@ -89,4 +89,4 @@ useAuth.propTypes = {
     }),
     loading: PropTypes.bool,
     error: PropTypes.string,
-}; 
+};

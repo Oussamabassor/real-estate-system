@@ -91,10 +91,7 @@ export default function Footer() {
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand Section */}
-          <motion.div
-            variants={itemVariants}
-            className="space-y-6"
-          >
+          <motion.div variants={itemVariants} className="space-y-6">
             <motion.div
               whileHover={{ scale: 1.05 }}
               className="flex items-center space-x-2"
@@ -123,22 +120,14 @@ export default function Footer() {
           </motion.div>
 
           {/* Company Links */}
-          <motion.div
-            variants={itemVariants}
-          >
+          <motion.div variants={itemVariants}>
             <h3 className="mb-4 font-semibold text-gray-900">
               {t("footer.company")}
             </h3>
             <ul className="space-y-3">
               {companyLinks.map((link, index) => (
-                <motion.li
-                  key={link.name}
-                  variants={itemVariants}
-                >
-                  <motion.div
-                    whileHover={{ x: 5 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
+                <motion.li key={link.name} variants={itemVariants}>
+                  <motion.div whileHover={{ x: 5 }} whileTap={{ scale: 0.98 }}>
                     <Link
                       to={link.href}
                       className="text-gray-600 transition-colors hover:text-primary-600"
@@ -152,22 +141,14 @@ export default function Footer() {
           </motion.div>
 
           {/* Resource Links */}
-          <motion.div
-            variants={itemVariants}
-          >
+          <motion.div variants={itemVariants}>
             <h3 className="mb-4 font-semibold text-gray-900">
               {t("footer.resources")}
             </h3>
             <ul className="space-y-3">
               {resourceLinks.map((link, index) => (
-                <motion.li
-                  key={link.name}
-                  variants={itemVariants}
-                >
-                  <motion.div
-                    whileHover={{ x: 5 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
+                <motion.li key={link.name} variants={itemVariants}>
+                  <motion.div whileHover={{ x: 5 }} whileTap={{ scale: 0.98 }}>
                     <Link
                       to={link.href}
                       className="text-gray-600 transition-colors hover:text-primary-600"
@@ -181,9 +162,7 @@ export default function Footer() {
           </motion.div>
 
           {/* Contact Information */}
-          <motion.div
-            variants={itemVariants}
-          >
+          <motion.div variants={itemVariants}>
             <h3 className="mb-4 font-semibold text-gray-900">
               {t("footer.contact")}
             </h3>
@@ -225,7 +204,7 @@ export default function Footer() {
                 <span>
                   123 Avenue de l'Immobilier,
                   <br />
-                  75001 Paris, France
+                  40000, Marrakech, France
                 </span>
               </motion.li>
             </ul>
@@ -243,7 +222,7 @@ export default function Footer() {
               variants={itemVariants}
               className="text-sm text-gray-600"
             >
-              {t("footer.copyright")}
+              &copy; {new Date().getFullYear()} ORMVAH. Tous droits réservés.
             </motion.div>
 
             {/* Legal Links */}

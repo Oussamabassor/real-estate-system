@@ -30,35 +30,48 @@ export default function LoadingScreen() {
       {/* Hero Section Skeleton */}
       <motion.div
         variants={itemVariants}
-        className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-primary-900"
+        className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-primary-900 mt-16"
       >
-        <div className="absolute inset-0 bg-gray-800 opacity-40" />
-        <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
-          <div className="md:ml-auto md:w-1/2 md:pl-10">
-            <div className="h-12 w-3/4 bg-gray-200 rounded animate-pulse mb-4" />
-            <div className="h-6 w-1/2 bg-gray-200 rounded animate-pulse mb-8" />
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg shadow-lg p-6 space-y-4">
-              <div className="flex flex-col gap-4 sm:flex-row">
-                <div className="flex-1">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-900/90 to-gray-900/90 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-30" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="h-12 w-3/4 bg-white/20 backdrop-blur rounded animate-pulse mx-auto mb-4" />
+            <div className="h-6 w-1/2 bg-white/10 backdrop-blur rounded animate-pulse mx-auto mb-8" />
+
+            {/* Improved Search Form */}
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-xl p-4 max-w-2xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                <div className="sm:col-span-5">
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
                       <div className="h-5 w-5 bg-gray-200 rounded animate-pulse" />
                     </div>
-                    <div className="h-12 w-full bg-gray-200 rounded animate-pulse" />
+                    <div className="h-12 w-full bg-white/80 backdrop-blur rounded-lg animate-pulse" />
                   </div>
                 </div>
-                <div className="h-12 w-full bg-gray-200 rounded animate-pulse" />
-                <div className="h-12 w-full bg-primary-600 rounded animate-pulse" />
+                <div className="sm:col-span-4">
+                  <div className="h-12 w-full bg-white/80 backdrop-blur rounded-lg animate-pulse" />
+                </div>
+                <div className="sm:col-span-3">
+                  <div className="h-12 w-full bg-primary-600 rounded-lg animate-pulse" />
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Decorative Elements */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-50 to-transparent" />
       </motion.div>
 
       {/* Stats Section Skeleton */}
       <motion.div
         variants={itemVariants}
-        className="bg-white py-20"
+        className="bg-gray-50 py-12"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
@@ -66,9 +79,9 @@ export default function LoadingScreen() {
               <motion.div
                 key={i}
                 variants={itemVariants}
-                className="p-6 transition-all duration-300 card group"
+                className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300"
               >
-                <div className="flex items-center justify-center w-12 h-12 mb-4 transition-colors rounded-full bg-gray-100 group-hover:bg-gray-200">
+                <div className="flex items-center justify-center w-12 h-12 mb-4 bg-primary-50 rounded-xl">
                   <div className="h-6 w-6 bg-gray-200 rounded animate-pulse" />
                 </div>
                 <div className="h-8 w-1/2 bg-gray-200 rounded animate-pulse mb-2" />
@@ -330,19 +343,35 @@ export default function LoadingScreen() {
       variants={containerVariants}
       className="min-h-screen bg-gray-50"
     >
-      {/* Header Skeleton */}
+      {/* Header Skeleton - Improved Layout */}
       <motion.header
         variants={itemVariants}
-        className="sticky top-0 z-50 bg-white shadow-sm"
+        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm backdrop-blur-sm bg-white/90"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            {/* Logo Section */}
+            <div className="flex-shrink-0 flex items-center space-x-2">
+              <div className="h-10 w-10 bg-gray-200 rounded-lg animate-pulse" />
               <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
             </div>
+
+            {/* Navigation Links - Centered */}
+            <div className="hidden md:flex items-center justify-center flex-1 px-8">
+              <div className="flex space-x-8">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                ))}
+              </div>
+            </div>
+
+            {/* Right Section - Auth Buttons */}
             <div className="flex items-center space-x-4">
-              <div className="h-8 w-24 bg-gray-200 rounded animate-pulse" />
+              <div className="hidden md:flex space-x-4">
+                <div className="h-9 w-24 bg-gray-200 rounded-md animate-pulse" />
+                <div className="h-9 w-24 bg-primary-600 rounded-md animate-pulse" />
+              </div>
+              <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse" />
             </div>
           </div>
         </div>
@@ -400,3 +429,4 @@ export default function LoadingScreen() {
     </motion.div>
   );
 }
+
