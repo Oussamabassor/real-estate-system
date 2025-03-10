@@ -1,4 +1,4 @@
-import api from './config';
+import BaseService from './base/BaseService';
 
 /**
  * @typedef {import('../types/api').PaymentReceipt} PaymentReceipt
@@ -6,15 +6,26 @@ import api from './config';
  * @typedef {import('../types/api').ApiResponse} ApiResponse
  */
 
-class PaymentService {
+/**
+ * Service for managing payments
+ * @extends BaseService
+ */
+class PaymentService extends BaseService {
+    constructor() {
+        super('/payments');
+    }
+
     /**
      * Create a payment receipt
-     * @param {PaymentCreateInput} data - Payment data
-     * @returns {Promise<ApiResponse<PaymentReceipt>>}
+     * @param {Object} data - Payment data
+     * @param {number} data.reservation_id - Reservation ID
+     * @param {number} data.amount - Payment amount
+     * @param {string} data.payment_method - Payment method
+     * @returns {Promise<import('./types').ApiResponse>}
      */
     async createReceipt(data) {
         try {
-            const response = await api.post('/payments/receipts', data);
+            const response = await this.api.post(`${this.resourcePath}/receipts`, data);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -22,13 +33,13 @@ class PaymentService {
     }
 
     /**
-     * Get a payment receipt by ID
+     * Get a payment receipt
      * @param {number} id - Receipt ID
-     * @returns {Promise<ApiResponse<PaymentReceipt>>}
+     * @returns {Promise<import('./types').ApiResponse>}
      */
     async getReceipt(id) {
         try {
-            const response = await api.get(`/payments/receipts/${id}`);
+            const response = await this.api.get(`${this.resourcePath}/receipts/${id}`);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -38,12 +49,12 @@ class PaymentService {
     /**
      * Update payment status
      * @param {number} id - Receipt ID
-     * @param {'pending'|'completed'|'failed'} status - New status
-     * @returns {Promise<ApiResponse<PaymentReceipt>>}
+     * @param {string} status - New status
+     * @returns {Promise<import('./types').ApiResponse>}
      */
     async updateStatus(id, status) {
         try {
-            const response = await api.put(`/payments/receipts/${id}/status`, { status });
+            const response = await this.api.put(`${this.resourcePath}/receipts/${id}/status`, { status });
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -53,11 +64,53 @@ class PaymentService {
     /**
      * Get user's payment history
      * @param {number} userId - User ID
-     * @returns {Promise<ApiResponse<PaymentReceipt[]>>}
+     * @param {Object} [params] - Query parameters
+     * @param {number} [params.page=1] - Page number
+     * @param {number} [params.per_page=10] - Items per page
+     * @param {string} [params.status] - Payment status
+     * @returns {Promise<import('./types').PaginatedResponse>}
      */
-    async getUserPayments(userId) {
+    async getUserPayments(userId, params = {}) {
         try {
-            const response = await api.get(`/users/${userId}/payments`);
+            const response = await this.api.get(`/users/${userId}/payments`, {
+                params: {
+                    page: 1,
+                    per_page: 10,
+                    ...params
+                }
+            });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Generate payment invoice
+     * @param {number} receiptId - Receipt ID
+     * @returns {Promise<import('./types').ApiResponse>}
+     */
+    async generateInvoice(receiptId) {
+        try {
+            const response = await this.api.post(`${this.resourcePath}/receipts/${receiptId}/invoice`);
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Process payment
+     * @param {number} receiptId - Receipt ID
+     * @param {Object} paymentDetails - Payment details
+     * @returns {Promise<import('./types').ApiResponse>}
+     */
+    async processPayment(receiptId, paymentDetails) {
+        try {
+            const response = await this.api.post(
+                `${this.resourcePath}/receipts/${receiptId}/process`,
+                paymentDetails
+            );
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -81,4 +134,5 @@ class PaymentService {
     }
 }
 
+// Create a singleton instance
 export const paymentService = new PaymentService(); 

@@ -1,4 +1,4 @@
-import api from './config';
+import BaseService from './base/BaseService';
 
 /**
  * @typedef {import('../types/api').Property} Property
@@ -7,7 +7,15 @@ import api from './config';
  * @typedef {import('../types/api').PaginatedResponse} PaginatedResponse
  */
 
-class PropertyService {
+/**
+ * Service for managing properties
+ * @extends BaseService
+ */
+class PropertyService extends BaseService {
+    constructor() {
+        super('/properties');
+    }
+
     /**
      * Get all properties with pagination
      * @param {number} page - Page number
@@ -16,7 +24,7 @@ class PropertyService {
      */
     async getAll(page = 1, perPage = 10) {
         try {
-            const response = await api.get('/properties', {
+            const response = await this.api.get('/properties', {
                 params: { page, per_page: perPage }
             });
             return response.data;
@@ -32,7 +40,7 @@ class PropertyService {
      */
     async getById(id) {
         try {
-            const response = await api.get(`/properties/${id}`);
+            const response = await this.api.get(`${this.resourcePath}/${id}`);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -46,7 +54,7 @@ class PropertyService {
      */
     async create(data) {
         try {
-            const response = await api.post('/properties', data);
+            const response = await this.api.post('/properties', data);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -61,7 +69,7 @@ class PropertyService {
      */
     async update(id, data) {
         try {
-            const response = await api.put(`/properties/${id}`, data);
+            const response = await this.api.put(`${this.resourcePath}/${id}`, data);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -75,7 +83,7 @@ class PropertyService {
      */
     async delete(id) {
         try {
-            const response = await api.delete(`/properties/${id}`);
+            const response = await this.api.delete(`${this.resourcePath}/${id}`);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -84,15 +92,96 @@ class PropertyService {
 
     /**
      * Search properties with filters
-     * @param {string} query - Search query
-     * @param {Object} filters - Additional filters
-     * @returns {Promise<PaginatedResponse<Property>>}
+     * @param {Object} params - Search parameters
+     * @param {string} [params.query] - Search query
+     * @param {string} [params.type] - Property type
+     * @param {number} [params.min_price] - Minimum price
+     * @param {number} [params.max_price] - Maximum price
+     * @param {number} [params.min_bedrooms] - Minimum number of bedrooms
+     * @param {number} [params.min_bathrooms] - Minimum number of bathrooms
+     * @param {number} [params.min_area] - Minimum area
+     * @param {number} [params.max_area] - Maximum area
+     * @param {string} [params.status] - Property status
+     * @param {number} [params.page=1] - Page number
+     * @param {number} [params.per_page=10] - Items per page
+     * @returns {Promise<import('./types').PaginatedResponse>}
      */
-    async search(query, filters = {}) {
+    async search(params = {}) {
         try {
-            const response = await api.get('/properties/search', {
-                params: { q: query, ...filters }
+            const response = await this.api.get(`${this.resourcePath}/search`, { params });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Get featured properties
+     * @param {number} [limit=6] - Number of properties to return
+     * @returns {Promise<import('./types').ApiResponse>}
+     */
+    async getFeatured(limit = 6) {
+        try {
+            const response = await this.api.get(`${this.resourcePath}/featured`, {
+                params: { limit }
             });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Get similar properties
+     * @param {number} propertyId - Property ID
+     * @param {number} [limit=3] - Number of properties to return
+     * @returns {Promise<import('./types').ApiResponse>}
+     */
+    async getSimilar(propertyId, limit = 3) {
+        try {
+            const response = await this.api.get(`${this.resourcePath}/${propertyId}/similar`, {
+                params: { limit }
+            });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Upload property images
+     * @param {number} propertyId - Property ID
+     * @param {FormData} formData - Form data containing images
+     * @returns {Promise<import('./types').ApiResponse>}
+     */
+    async uploadImages(propertyId, formData) {
+        try {
+            const response = await this.api.post(
+                `${this.resourcePath}/${propertyId}/images`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Delete a property image
+     * @param {number} propertyId - Property ID
+     * @param {string} imageId - Image ID
+     * @returns {Promise<import('./types').ApiResponse>}
+     */
+    async deleteImage(propertyId, imageId) {
+        try {
+            const response = await this.api.delete(
+                `${this.resourcePath}/${propertyId}/images/${imageId}`
+            );
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -120,4 +209,5 @@ class PropertyService {
     }
 }
 
+// Create a singleton instance
 export const propertyService = new PropertyService(); 

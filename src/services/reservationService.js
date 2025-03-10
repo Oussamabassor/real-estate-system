@@ -1,3 +1,4 @@
+import BaseService from './base/BaseService';
 import api from './config';
 
 /**
@@ -7,7 +8,15 @@ import api from './config';
  * @typedef {import('../types/api').PaginatedResponse} PaginatedResponse
  */
 
-class ReservationService {
+/**
+ * Service for managing reservations
+ * @extends BaseService
+ */
+class ReservationService extends BaseService {
+    constructor() {
+        super('/reservations');
+    }
+
     /**
      * Get all reservations with pagination
      * @param {number} page - Page number
@@ -69,13 +78,23 @@ class ReservationService {
     }
 
     /**
-     * Cancel a reservation
-     * @param {number} id - Reservation ID
-     * @returns {Promise<ApiResponse<Reservation>>}
+     * Get user's reservations
+     * @param {number} userId - User ID
+     * @param {Object} [params] - Query parameters
+     * @param {number} [params.page=1] - Page number
+     * @param {number} [params.per_page=10] - Items per page
+     * @param {string} [params.status] - Reservation status
+     * @returns {Promise<import('./types').PaginatedResponse>}
      */
-    async cancel(id) {
+    async getUserReservations(userId, params = {}) {
         try {
-            const response = await api.post(`/reservations/${id}/cancel`);
+            const response = await this.api.get(`/users/${userId}/reservations`, {
+                params: {
+                    page: 1,
+                    per_page: 10,
+                    ...params
+                }
+            });
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -83,16 +102,68 @@ class ReservationService {
     }
 
     /**
-     * Get user's reservations
-     * @param {number} userId - User ID
-     * @param {number} page - Page number
-     * @param {number} perPage - Items per page
-     * @returns {Promise<PaginatedResponse<Reservation>>}
+     * Cancel a reservation
+     * @param {number} id - Reservation ID
+     * @param {string} [reason] - Cancellation reason
+     * @returns {Promise<import('./types').ApiResponse>}
      */
-    async getUserReservations(userId, page = 1, perPage = 10) {
+    async cancel(id, reason = '') {
         try {
-            const response = await api.get(`/users/${userId}/reservations`, {
-                params: { page, per_page: perPage }
+            const response = await this.api.post(`${this.resourcePath}/${id}/cancel`, { reason });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Check property availability
+     * @param {number} propertyId - Property ID
+     * @param {string} startDate - Start date (YYYY-MM-DD)
+     * @param {string} endDate - End date (YYYY-MM-DD)
+     * @returns {Promise<import('./types').ApiResponse>}
+     */
+    async checkAvailability(propertyId, startDate, endDate) {
+        try {
+            const response = await this.api.get(`/properties/${propertyId}/availability`, {
+                params: { start_date: startDate, end_date: endDate }
+            });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Get reservation summary
+     * @param {number} propertyId - Property ID
+     * @param {string} startDate - Start date (YYYY-MM-DD)
+     * @param {string} endDate - End date (YYYY-MM-DD)
+     * @returns {Promise<import('./types').ApiResponse>}
+     */
+    async getReservationSummary(propertyId, startDate, endDate) {
+        try {
+            const response = await this.api.get(`/properties/${propertyId}/reservation-summary`, {
+                params: { start_date: startDate, end_date: endDate }
+            });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Update reservation status
+     * @param {number} id - Reservation ID
+     * @param {string} status - New status
+     * @param {string} [note] - Status update note
+     * @returns {Promise<import('./types').ApiResponse>}
+     */
+    async updateStatus(id, status, note = '') {
+        try {
+            const response = await this.api.put(`${this.resourcePath}/${id}/status`, {
+                status,
+                note
             });
             return response.data;
         } catch (error) {
@@ -117,4 +188,5 @@ class ReservationService {
     }
 }
 
+// Create a singleton instance
 export const reservationService = new ReservationService(); 
