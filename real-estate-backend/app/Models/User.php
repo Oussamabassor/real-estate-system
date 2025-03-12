@@ -7,13 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Jenssegers\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
-
-    protected $collection = 'users';
 
     /**
      * The attributes that are mass assignable.
@@ -52,7 +50,6 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
         'is_admin' => 'boolean',
         'is_verified' => 'boolean',
     ];
@@ -255,5 +252,11 @@ class User extends Authenticatable
     public function getTotalFavoritesAttribute()
     {
         return $this->favorites()->count();
+    }
+
+    // Add a mutator to hash the password when setting it
+    public function setPasswordAttribute($value)
+    {
+        $this->attributes['password'] = bcrypt($value);
     }
 }

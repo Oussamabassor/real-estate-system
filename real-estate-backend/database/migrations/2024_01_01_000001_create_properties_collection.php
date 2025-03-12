@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('properties', function (Blueprint $table) { // تغيير Blueprint بدلاً من collection
             $table->id();
             $table->string('title');
+            $table->text('description')->nullable();
             $table->string('property_type');
             $table->string('status');
             $table->decimal('price', 10, 2);

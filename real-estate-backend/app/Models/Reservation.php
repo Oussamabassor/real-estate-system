@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Jenssegers\Mongodb\Eloquent\Model;
-use Jenssegers\Mongodb\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Reservation extends Model
 {
     use SoftDeletes;
 
-    protected $connection = 'mongodb';
+    // Remove the MongoDB connection
+    // protected $connection = 'mongodb';
     protected $collection = 'reservations';
 
     protected $fillable = [

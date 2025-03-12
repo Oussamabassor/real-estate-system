@@ -21,6 +21,14 @@ return new class extends Migration
             $table->string('password');
             $table->rememberToken();
             $table->enum('role', ['user', 'admin', 'consultant'])->default('user');
+            $table->boolean('is_admin')->default(false);
+            $table->boolean('is_verified')->default(false);
+            $table->string('phone')->nullable();
+            $table->string('address')->nullable();
+            $table->string('city')->nullable();
+            $table->string('state')->nullable();
+            $table->string('zip_code')->nullable();
+            $table->string('avatar')->nullable();
             $table->timestamps();
         });
     }

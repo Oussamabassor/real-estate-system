@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
-use Jenssegers\Mongodb\Eloquent\Model;
-use Jenssegers\Mongodb\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Property extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
-    protected $connection = 'mongodb';
+    // Remove the MongoDB connection
+    // protected $connection = 'mongodb';
     protected $collection = 'properties';
 
     protected $fillable = [
@@ -221,4 +223,4 @@ class Property extends Model
     {
         return array_slice($this->images, 1) ?? [];
     }
-} 
+}

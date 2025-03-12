@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Jenssegers\Mongodb\Eloquent\Model;
-use Jenssegers\Mongodb\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Review extends Model
 {
     use SoftDeletes;
 
-    protected $connection = 'mongodb';
+    // Remove the MongoDB connection
+    // protected $connection = 'mongodb';
     protected $collection = 'reviews';
 
     protected $fillable = [
@@ -88,7 +89,7 @@ class Review extends Model
      */
     public function getStarsAttribute()
     {
-        return str_repeat('★', floor($this->rating)) . 
+        return str_repeat('★', floor($this->rating)) .
                str_repeat('☆', 5 - floor($this->rating));
     }
 
@@ -169,4 +170,4 @@ class Review extends Model
             return 'negative';
         }
     }
-} 
+}
