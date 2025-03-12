@@ -22,7 +22,7 @@ export default class BaseService {
             const response = await this.api.get(this.resourcePath, { params });
             return response.data;
         } catch (error) {
-            throw this.handleError(error);
+            throw this._handleError(error);
         }
     }
 
@@ -36,7 +36,7 @@ export default class BaseService {
             const response = await this.api.get(`${this.resourcePath}/${id}`);
             return response.data;
         } catch (error) {
-            throw this.handleError(error);
+            throw this._handleError(error);
         }
     }
 
@@ -50,7 +50,7 @@ export default class BaseService {
             const response = await this.api.post(this.resourcePath, data);
             return response.data;
         } catch (error) {
-            throw this.handleError(error);
+            throw this._handleError(error);
         }
     }
 
@@ -65,7 +65,7 @@ export default class BaseService {
             const response = await this.api.put(`${this.resourcePath}/${id}`, data);
             return response.data;
         } catch (error) {
-            throw this.handleError(error);
+            throw this._handleError(error);
         }
     }
 
@@ -79,19 +79,27 @@ export default class BaseService {
             const response = await this.api.delete(`${this.resourcePath}/${id}`);
             return response.data;
         } catch (error) {
-            throw this.handleError(error);
+            throw this._handleError(error);
         }
     }
 
     /**
      * Handle API errors
-     * @protected
+     * @private
      * @param {Error} error - Error object
      * @returns {Error}
      */
-    protected handleError(error) {
-        // The base error handling is already done in the API interceptor
-        // This method can be overridden by child classes for specific error handling
-        return error;
+    _handleError(error) {
+        if (error.response) {
+            // The request was made and the server responded with a status code
+            // that falls out of the range of 2xx
+            return new Error(error.response.data.message || 'An error occurred');
+        } else if (error.request) {
+            // The request was made but no response was received
+            return new Error('No response received from server');
+        } else {
+            // Something happened in setting up the request that triggered an Error
+            return new Error('Error setting up the request');
+        }
     }
 } 

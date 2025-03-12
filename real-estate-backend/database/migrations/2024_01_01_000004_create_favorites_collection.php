@@ -11,12 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mongodb')->create('favorites', function (Blueprint $collection) {
-            $collection->index('user_id');
-            $collection->index('property_id');
-            $collection->unique(['user_id', 'property_id']);
-            $collection->index('created_at');
-            $collection->index('updated_at');
+        Schema::create('favorites', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('property_id');
+            $table->timestamps();
+
+            $table->unique(['user_id', 'property_id']);
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('property_id')->references('id')->on('properties')->onDelete('cascade');
         });
     }
 
@@ -25,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection('mongodb')->dropIfExists('favorites');
+        Schema::dropIfExists('favorites');
     }
 }; 

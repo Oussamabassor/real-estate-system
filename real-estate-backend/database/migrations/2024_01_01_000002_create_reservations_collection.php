@@ -11,14 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mongodb')->create('reservations', function (Blueprint $collection) {
-            $collection->index('property_id');
-            $collection->index('user_id');
-            $collection->index('check_in_date');
-            $collection->index('check_out_date');
-            $collection->index('status');
-            $collection->index('created_at');
-            $collection->index('updated_at');
+        Schema::create('reservations', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('property_id');
+            $table->unsignedBigInteger('user_id');
+            $table->date('check_in_date');
+            $table->date('check_out_date');
+            $table->string('status')->default('pending');
+            $table->timestamps();
+
+            // إضافة فهارس لتحسين البحث والأداء
+            $table->index('property_id');
+            $table->index('user_id');
+            $table->index('check_in_date');
+            $table->index('check_out_date');
+            $table->index('status');
+
+            // إضافة قيود العلاقات
+            $table->foreign('property_id')->references('id')->on('properties')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -27,6 +38,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection('mongodb')->dropIfExists('reservations');
+        Schema::dropIfExists('reservations');
     }
-}; 
+};

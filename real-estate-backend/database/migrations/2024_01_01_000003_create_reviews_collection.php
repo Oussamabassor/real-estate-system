@@ -11,13 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('mongodb')->create('reviews', function (Blueprint $collection) {
-            $collection->index('property_id');
-            $collection->index('user_id');
-            $collection->index('rating');
-            $collection->index('is_verified');
-            $collection->index('created_at');
-            $collection->index('updated_at');
+        Schema::create('reviews', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('property_id');
+            $table->unsignedBigInteger('user_id');
+            $table->tinyInteger('rating'); // تقييم بين 1-5
+            $table->boolean('is_verified')->default(false);
+            $table->text('review')->nullable();
+            $table->timestamps();
+
+            // إضافة فهارس لتحسين الأداء
+            $table->index('property_id');
+            $table->index('user_id');
+            $table->index('rating');
+            $table->index('is_verified');
+
+            // إضافة قيود العلاقات
+            $table->foreign('property_id')->references('id')->on('properties')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -26,6 +37,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection('mongodb')->dropIfExists('reviews');
+        Schema::dropIfExists('reviews');
     }
-}; 
+};

@@ -13,14 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->enum('role', ['user', 'admin', 'consultant'])->default('user');
+            $table->foreignId('reservation_id')->constrained('reservations')->onDelete('cascade');
+            $table->decimal('amount', 10, 2);
+            $table->enum('payment_method', ['cheque', 'cash', 'bank_transfer']);
+            $table->enum('payment_status', ['pending', 'completed', 'failed'])->default('pending');
             $table->timestamps();
         });
     }
@@ -32,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('payments');
     }
-};
+}; 

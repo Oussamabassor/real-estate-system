@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mongodb'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -93,19 +93,19 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
-        'mongodb' => [
-            'driver' => 'mongodb',
-            'host' => env('MONGO_DB_HOST', '127.0.0.1'),
-            'port' => env('MONGO_DB_PORT', 27017),
-            'database' => env('MONGO_DB_DATABASE', 'real_estate'),
-            'username' => env('MONGO_DB_USERNAME', ''),
-            'password' => env('MONGO_DB_PASSWORD', ''),
-            'options' => [
-                'database' => env('MONGO_DB_DATABASE', 'real_estate'),
-                'authSource' => env('MONGO_DB_AUTH_SOURCE', 'admin'),
-                'ssl' => env('MONGO_DB_SSL', false),
-            ],
-        ],
+        // 'mongodb' => [
+        //     'driver' => 'mongodb',
+        //     'host' => env('MONGO_DB_HOST', '127.0.0.1'),
+        //     'port' => env('MONGO_DB_PORT', 27017),
+        //     'database' => env('MONGO_DB_DATABASE', 'real_estate'),
+        //     'username' => env('MONGO_DB_USERNAME', ''),
+        //     'password' => env('MONGO_DB_PASSWORD', ''),
+        //     'options' => [
+        //         'database' => env('MONGO_DB_DATABASE', 'real_estate'),
+        //         'authSource' => env('MONGO_DB_AUTH_SOURCE', 'admin'),
+        //         'ssl' => env('MONGO_DB_SSL', false),
+        //     ],
+        // ],
 
     ],
 
