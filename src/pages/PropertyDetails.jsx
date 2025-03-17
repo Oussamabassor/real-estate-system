@@ -1,446 +1,548 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import PropTypes from 'prop-types';
-import { propertyApi } from '../services/api';
-import { useAuth } from '../hooks/useAuth';
+import { useParams, Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Calendar,
-    MapPin,
-    Home,
-    DollarSign,
-    Users,
-    Bath,
-    SquareStack,
-    Building2,
-    Heart,
-    Share2,
-    ChevronLeft,
-    ChevronRight,
-    X,
-    Check,
-    Mail,
-    Phone,
-} from 'lucide-react';
+    MapPinIcon,
+    HomeIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    HeartIcon,
+    ShareIcon,
+    ArrowLeftIcon,
+    CalendarIcon,
+    DocumentTextIcon
+} from '@heroicons/react/24/outline';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBath, faBed, faRuler, faParking, faWifi, faTv, faSwimmingPool, faFan } from "@fortawesome/free-solid-svg-icons";
+
+const amenities = [
+    { icon: faWifi, label: 'Free WiFi' },
+    { icon: faParking, label: 'Parking' },
+    { icon: faTv, label: 'Smart TV' },
+    { icon: faSwimmingPool, label: 'Pool' },
+    { icon: faFan, label: 'Air Conditioning' }
+];
+
+const FeatureItem = ({ icon, value, label }) => (
+    <motion.div
+        whileHover={{ scale: 1.02 }}
+        className="flex items-center gap-3 bg-white p-4 rounded-xl border border-purple-100 hover:border-purple-300 hover:shadow-md transition-all duration-300"
+    >
+        <div className="p-3 bg-purple-50 rounded-lg">
+            <FontAwesomeIcon icon={icon} className="w-5 h-5 text-purple-500" />
+        </div>
+        <div>
+            <div className="text-xl font-bold text-gray-900">{value}</div>
+            <div className="text-sm text-gray-500">{label}</div>
+        </div>
+    </motion.div>
+);
+
+const AmenityItem = ({ icon, label }) => (
+    <motion.div
+        whileHover={{ scale: 1.02 }}
+        className="flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-100 hover:border-purple-300 hover:shadow-sm transition-all duration-300"
+    >
+        <FontAwesomeIcon icon={icon} className="w-4 h-4 text-purple-500" />
+        <span className="text-sm font-medium text-gray-700">{label}</span>
+    </motion.div>
+);
+
+const PageTransition = ({ children }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+    >
+        {children}
+    </motion.div>
+);
+
+const LoadingAnimation = () => (
+    <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="min-h-screen bg-gray-50 py-12"
+    >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Back Button Skeleton */}
+            <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "10rem" }}
+                className="w-40 h-6 bg-purple-100 rounded-lg mb-8 animate-pulse"
+            />
+
+            {/* Image Gallery Skeleton with Animation */}
+            <motion.div
+                initial={{ height: 0 }}
+                animate={{ height: 600 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="relative rounded-3xl overflow-hidden mb-8 bg-purple-100"
+            >
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="absolute inset-0"
+                >
+                    {/* Status Badge Skeleton */}
+                    <motion.div
+                        initial={{ x: -20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="absolute top-4 left-4"
+                    >
+                        <div className="w-24 h-8 bg-white/20 rounded-lg" />
+                    </motion.div>
+
+                    {/* Action Buttons Skeleton */}
+                    <motion.div
+                        initial={{ x: 20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="absolute top-4 right-4 flex items-center space-x-2"
+                    >
+                        <div className="w-12 h-12 bg-white/20 rounded-full" />
+                        <div className="w-12 h-12 bg-white/20 rounded-full" />
+                    </motion.div>
+
+                    {/* Image Counter Skeleton */}
+                    <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="absolute bottom-4 right-4"
+                    >
+                        <div className="w-20 h-8 bg-white/20 rounded-full" />
+                    </motion.div>
+                </motion.div>
+            </motion.div>
+
+            {/* Content Grid Skeleton with Staggered Animation */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+            >
+                {/* Main Content Skeleton */}
+                <motion.div
+                    className="lg:col-span-2 space-y-8"
+                    variants={{
+                        hidden: { opacity: 0, y: 20 },
+                        show: {
+                            opacity: 1,
+                            y: 0,
+                            transition: {
+                                staggerChildren: 0.1
+                            }
+                        }
+                    }}
+                    initial="hidden"
+                    animate="show"
+                >
+                    {/* Header Skeleton */}
+                    <motion.div className="space-y-4">
+                        <motion.div className="h-10 bg-purple-100 rounded-lg w-3/4 animate-pulse" />
+                        <motion.div className="h-6 bg-purple-100 rounded-lg w-1/2 animate-pulse" />
+                        <motion.div className="h-8 bg-purple-100 rounded-lg w-1/3 animate-pulse" />
+                    </motion.div>
+
+                    {/* Features Grid Skeleton */}
+                    <motion.div className="grid grid-cols-2 gap-4">
+                        {[...Array(4)].map((_, i) => (
+                            <motion.div
+                                key={i}
+                                className="flex items-center gap-3 bg-white p-4 rounded-xl border border-purple-100 animate-pulse"
+                            >
+                                <motion.div className="w-12 h-12 bg-purple-100 rounded-lg" />
+                                <motion.div className="flex-1 space-y-2">
+                                    <motion.div className="h-6 bg-purple-100 rounded w-1/2" />
+                                    <motion.div className="h-4 bg-purple-100 rounded w-1/3" />
+                                </motion.div>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+
+                    {/* Description Skeleton */}
+                    <motion.div className="bg-white rounded-xl p-6 border border-purple-100">
+                        <motion.div className="h-7 bg-purple-100 rounded w-1/4 mb-4 animate-pulse" />
+                        <motion.div className="space-y-2 animate-pulse">
+                            <motion.div className="h-4 bg-purple-100 rounded w-full" />
+                            <motion.div className="h-4 bg-purple-100 rounded w-full" />
+                            <motion.div className="h-4 bg-purple-100 rounded w-3/4" />
+                        </motion.div>
+                    </motion.div>
+
+                    {/* Amenities Skeleton */}
+                    <motion.div>
+                        <motion.div className="h-7 bg-purple-100 rounded w-1/4 mb-4 animate-pulse" />
+                        <motion.div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {[...Array(6)].map((_, i) => (
+                                <motion.div
+                                    key={i}
+                                    className="flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-100"
+                                >
+                                    <motion.div className="w-4 h-4 bg-purple-100 rounded animate-pulse" />
+                                    <motion.div className="h-4 bg-purple-100 rounded w-20 animate-pulse" />
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    </motion.div>
+                </motion.div>
+
+                {/* Sidebar Skeleton with Animation */}
+                <motion.div
+                    className="space-y-6"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 }}
+                >
+                    {/* Contact Form Skeleton */}
+                    <motion.div className="bg-white rounded-xl p-6 border border-purple-100">
+                        <motion.div className="h-7 bg-purple-100 rounded w-2/3 mb-6 animate-pulse" />
+                        <motion.div className="space-y-4">
+                            {/* Form Fields */}
+                            {[...Array(4)].map((_, i) => (
+                                <motion.div key={i} className="space-y-1">
+                                    <motion.div className="h-4 bg-purple-100 rounded w-1/4 animate-pulse" />
+                                    <motion.div className="h-10 bg-purple-100 rounded-lg w-full animate-pulse" />
+                                </motion.div>
+                            ))}
+                            {/* Button */}
+                            <motion.div className="h-12 bg-purple-100 rounded-xl w-full animate-pulse" />
+                        </motion.div>
+                    </motion.div>
+
+                    {/* Additional Info Skeleton */}
+                    <motion.div className="bg-white rounded-xl p-6 border border-purple-100">
+                        <motion.div className="h-7 bg-purple-100 rounded w-2/3 mb-4 animate-pulse" />
+                        <motion.div className="space-y-3">
+                            {[...Array(3)].map((_, i) => (
+                                <motion.div key={i} className="flex items-center justify-between">
+                                    <motion.div className="flex items-center gap-2">
+                                        <motion.div className="w-5 h-5 bg-purple-100 rounded animate-pulse" />
+                                        <motion.div className="h-4 bg-purple-100 rounded w-20 animate-pulse" />
+                                    </motion.div>
+                                    <motion.div className="h-4 bg-purple-100 rounded w-16 animate-pulse" />
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    </motion.div>
+                </motion.div>
+            </motion.div>
+        </div>
+    </motion.div>
+);
 
 export default function PropertyDetails() {
     const { id } = useParams();
-    const { user } = useAuth();
+    const location = useLocation();
     const [property, setProperty] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [showImageModal, setShowImageModal] = useState(false);
-    const [isFavorite, setIsFavorite] = useState(false);
-    const [showContactForm, setShowContactForm] = useState(false);
-    const [contactForm, setContactForm] = useState({
-        name: user?.name || '',
-        email: user?.email || '',
-        phone: user?.phone || '',
-        message: '',
-    });
+    const [isLiked, setIsLiked] = useState(false);
 
     useEffect(() => {
-        fetchPropertyDetails();
-    }, [id]);
+        // Reset loading state on route change
+        setLoading(true);
 
-    const fetchPropertyDetails = async () => {
-        try {
-            setLoading(true);
-            const response = await propertyApi.getById(id);
-            setProperty(response.data?.data || null);
-            setError(null);
-            // Check if property is in user's favorites
-            if (user) {
-                const isFav = user.favorites?.includes(id);
-                setIsFavorite(isFav);
+        // Simulated API call
+        const fetchData = async () => {
+            try {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                setProperty({
+                    id: 1,
+                    title: "Modern Luxury Apartment with Ocean View",
+                    description: "Experience luxury living in this stunning apartment featuring breathtaking ocean views, modern amenities, and premium finishes throughout. This exceptional property offers the perfect blend of comfort and sophistication.",
+                    price: 850000,
+                    type: "apartment",
+                    bedrooms: 3,
+                    bathrooms: 2,
+                    area: 180,
+                    floor: 15,
+                    location: "123 Ocean Drive, Miami Beach, FL",
+                    status: "For Sale",
+                    images: [
+                        "https://picsum.photos/1200/800",
+                        "https://picsum.photos/1201/800",
+                        "https://picsum.photos/1202/800",
+                        "https://picsum.photos/1203/800"
+                    ],
+                    yearBuilt: 2020,
+                    parking: 2
+                });
+            } finally {
+                setLoading(false);
             }
-        } catch (err) {
-            setError('Failed to load property details');
-            setProperty(null);
-        } finally {
-            setLoading(false);
-        }
+        };
+
+        fetchData();
+    }, [id, location.key]); // Add location.key to re-run effect on navigation
+
+    const handlePrevImage = () => {
+        setCurrentImageIndex((prev) =>
+            prev === 0 ? property.images.length - 1 : prev - 1
+        );
     };
 
-    const handleImageNavigation = (direction) => {
-        if (!property?.images?.length) return;
-
-        if (direction === 'next') {
-            setCurrentImageIndex((prev) =>
-                prev === property.images.length - 1 ? 0 : prev + 1
-            );
-        } else {
-            setCurrentImageIndex((prev) =>
-                prev === 0 ? property.images.length - 1 : prev - 1
-            );
-        }
-    };
-
-    const toggleFavorite = async () => {
-        if (!user) {
-            // Redirect to login or show login modal
-            return;
-        }
-        try {
-            await propertyApi.toggleFavorite(id);
-            setIsFavorite(!isFavorite);
-        } catch (err) {
-            console.error('Failed to toggle favorite');
-        }
-    };
-
-    const handleContactSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await propertyApi.contactOwner({
-                propertyId: id,
-                ownerId: property.owner.id,
-                ...contactForm
-            });
-            setShowContactForm(false);
-            // Show success message using a toast or alert
-            alert('Message sent successfully!');
-        } catch (err) {
-            // Show error message using a toast or alert
-            alert('Failed to send message. Please try again.');
-        }
+    const handleNextImage = () => {
+        setCurrentImageIndex((prev) =>
+            prev === property.images.length - 1 ? 0 : prev + 1
+        );
     };
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="loading-spinner h-12 w-12"></div>
-            </div>
+            <AnimatePresence mode="wait">
+                <LoadingAnimation key="loading" />
+            </AnimatePresence>
         );
     }
 
-    if (error || !property) {
+    if (!property) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <X className="mx-auto h-12 w-12 text-red-500" />
-                    <h3 className="mt-2 text-lg font-medium text-gray-900">Property Not Found</h3>
-                    <p className="mt-1 text-sm text-gray-500">{error}</p>
-                    <Link to="/properties" className="mt-6 btn btn-primary">
-                        Back to Properties
-                    </Link>
-                </div>
-            </div>
+            <AnimatePresence mode="wait">
+                <PageTransition key="not-found">
+                    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                        <div className="text-center">
+                            <HomeIcon className="w-16 h-16 text-purple-400 mx-auto mb-4" />
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Property Not Found</h2>
+                            <p className="text-gray-500 mb-6">The property you're looking for doesn't exist or has been removed.</p>
+                            <Link
+                                to="/properties"
+                                className="inline-flex items-center px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-purple-200 hover:shadow-xl"
+                            >
+                                <ArrowLeftIcon className="w-5 h-5 mr-2" />
+                                Back to Properties
+                            </Link>
+                        </div>
+                    </div>
+                </PageTransition>
+            </AnimatePresence>
         );
     }
 
-    // Ensure we have images array
-    const images = property.images || [];
-    const currentImage = images[currentImageIndex] || '';
+    const formatPrice = (price) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(price);
+    };
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Image Gallery */}
-            <div className="relative h-[60vh] bg-gray-900">
-                {currentImage ? (
-                    <img
-                        src={currentImage}
-                        alt={property.title}
-                        className="w-full h-full object-cover cursor-pointer transition-opacity"
-                        onClick={() => setShowImageModal(true)}
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white">
-                        No image available
-                    </div>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
-                    <div className="max-w-7xl mx-auto">
-                        <h1 className="text-4xl font-bold text-white mb-2">{property.title}</h1>
-                        <div className="flex items-center text-white space-x-4">
-                            <MapPin className="h-5 w-5" />
-                            <span>{property.address}, {property.city}, {property.state} {property.zip_code}</span>
-                        </div>
-                    </div>
-                </div>
-                {/* Image Navigation */}
-                {images.length > 1 && (
-                    <>
-                        <button
-                            onClick={() => handleImageNavigation('prev')}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
+        <AnimatePresence mode="wait">
+            <PageTransition key={`property-${id}`}>
+                <div className="min-h-screen bg-gray-50 py-12">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        {/* Back Button */}
+                        <Link
+                            to="/properties"
+                            className="inline-flex items-center text-purple-500 hover:text-purple-600 font-medium mb-8 group"
                         >
-                            <ChevronLeft className="h-6 w-6" />
-                        </button>
-                        <button
-                            onClick={() => handleImageNavigation('next')}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
-                        >
-                            <ChevronRight className="h-6 w-6" />
-                        </button>
-                        {/* Image Counter */}
-                        <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full">
-                            {currentImageIndex + 1} / {images.length}
-                        </div>
-                    </>
-                )}
-            </div>
+                            <ArrowLeftIcon className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200" />
+                            Back to Properties
+                        </Link>
 
-            {/* Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Main Content */}
-                    <div className="lg:col-span-2">
-                        {/* Quick Info */}
-                        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="flex items-center space-x-3">
-                                    <DollarSign className="h-6 w-6 text-primary-600" />
-                                    <div>
-                                        <p className="text-sm text-gray-500">Price</p>
-                                        <p className="font-semibold">${property.price.toLocaleString()}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center space-x-3">
-                                    <Users className="h-6 w-6 text-primary-600" />
-                                    <div>
-                                        <p className="text-sm text-gray-500">Bedrooms</p>
-                                        <p className="font-semibold">{property.bedrooms}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center space-x-3">
-                                    <Bath className="h-6 w-6 text-primary-600" />
-                                    <div>
-                                        <p className="text-sm text-gray-500">Bathrooms</p>
-                                        <p className="font-semibold">{property.bathrooms}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center space-x-3">
-                                    <SquareStack className="h-6 w-6 text-primary-600" />
-                                    <div>
-                                        <p className="text-sm text-gray-500">Area</p>
-                                        <p className="font-semibold">{property.area} sq ft</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {/* Image Gallery */}
+                        <div className="relative h-[600px] rounded-3xl overflow-hidden mb-8 group">
+                            <AnimatePresence mode="wait">
+                                <motion.img
+                                    key={currentImageIndex}
+                                    src={property.images[currentImageIndex]}
+                                    alt={`Property image ${currentImageIndex + 1}`}
+                                    className="w-full h-full object-cover"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.5 }}
+                                />
+                            </AnimatePresence>
 
-                        {/* Description */}
-                        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-                            <h2 className="text-2xl font-semibold mb-4">Description</h2>
-                            <p className="text-gray-600 whitespace-pre-line">{property.description}</p>
-                        </div>
-
-                        {/* Features */}
-                        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-                            <h2 className="text-2xl font-semibold mb-4">Features</h2>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {property.features?.map((feature, index) => (
-                                    <div key={index} className="flex items-center space-x-2">
-                                        <Check className="h-5 w-5 text-primary-600" />
-                                        <span>{feature}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Location */}
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h2 className="text-2xl font-semibold mb-4">Location</h2>
-                            <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden">
-                                {/* Add your map component here */}
-                                <div className="bg-gray-200 w-full h-full flex items-center justify-center">
-                                    Map placeholder
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Sidebar */}
-                    <div className="lg:col-span-1">
-                        {/* Action Buttons */}
-                        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-                            <div className="flex space-x-4 mb-6">
-                                <button
-                                    onClick={toggleFavorite}
-                                    className={`flex-1 btn ${isFavorite ? 'btn-primary' : 'btn-secondary'}`}
+                            {/* Image Navigation */}
+                            <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={handlePrevImage}
+                                    className="p-2 rounded-full bg-white/90 text-gray-900 hover:bg-white transition-all duration-200 shadow-lg"
                                 >
-                                    <Heart
-                                        className="h-5 w-5 mr-2"
-                                        fill={isFavorite ? "currentColor" : "none"}
-                                    />
-                                    {isFavorite ? 'Saved' : 'Save'}
-                                </button>
-                                <button className="flex-1 btn btn-secondary">
-                                    <Share2 className="h-5 w-5 mr-2" />
-                                    Share
-                                </button>
+                                    <ChevronLeftIcon className="w-6 h-6" />
+                                </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={handleNextImage}
+                                    className="p-2 rounded-full bg-white/90 text-gray-900 hover:bg-white transition-all duration-200 shadow-lg"
+                                >
+                                    <ChevronRightIcon className="w-6 h-6" />
+                                </motion.button>
                             </div>
-                            <button
-                                onClick={() => setShowContactForm(true)}
-                                className="w-full btn btn-primary"
-                            >
-                                Contact Agent
-                            </button>
+
+                            {/* Image Counter */}
+                            <div className="absolute bottom-4 right-4 px-4 py-2 bg-black/50 rounded-full text-white text-sm backdrop-blur-sm">
+                                {currentImageIndex + 1} / {property.images.length}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="absolute top-4 right-4 flex items-center space-x-2">
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => setIsLiked(!isLiked)}
+                                    className={`p-3 rounded-full backdrop-blur-sm transition-all duration-300 ${isLiked
+                                        ? 'bg-purple-500 text-white'
+                                        : 'bg-white/90 text-gray-600 hover:bg-white hover:text-purple-500'
+                                        }`}
+                                >
+                                    <HeartIcon className="w-6 h-6" />
+                                </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="p-3 rounded-full bg-white/90 backdrop-blur-sm text-gray-600 hover:bg-white hover:text-purple-500 transition-all duration-300"
+                                >
+                                    <ShareIcon className="w-6 h-6" />
+                                </motion.button>
+                            </div>
+
+                            {/* Status Badge */}
+                            <div className="absolute top-4 left-4">
+                                <motion.span
+                                    whileHover={{ scale: 1.05 }}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-purple-500/90 backdrop-blur-sm rounded-lg shadow-lg"
+                                >
+                                    {property.status}
+                                </motion.span>
+                            </div>
                         </div>
 
-                        {/* Agent/Owner Info */}
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="flex items-center space-x-4 mb-4">
-                                <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                                    {property.owner?.name?.charAt(0) || '?'}
-                                </div>
+                        {/* Content Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* Main Content */}
+                            <div className="lg:col-span-2 space-y-8">
+                                {/* Header */}
                                 <div>
-                                    <h3 className="font-semibold">{property.owner?.name || 'Owner'}</h3>
-                                    <p className="text-sm text-gray-500">Property Owner</p>
+                                    <h1 className="text-3xl font-bold text-gray-900 mb-4">{property.title}</h1>
+                                    <div className="flex items-center text-purple-500 mb-4">
+                                        <MapPinIcon className="w-5 h-5 mr-2" />
+                                        <span className="text-lg">{property.location}</span>
+                                    </div>
+                                    <div className="text-3xl font-bold text-purple-500">
+                                        {formatPrice(property.price)}
+                                    </div>
+                                </div>
+
+                                {/* Features Grid */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FeatureItem icon={faBed} value={property.bedrooms} label="Bedrooms" />
+                                    <FeatureItem icon={faBath} value={property.bathrooms} label="Bathrooms" />
+                                    <FeatureItem icon={faRuler} value={`${property.area} m²`} label="Living Area" />
+                                    <FeatureItem icon={faParking} value={property.parking} label="Parking Spots" />
+                                </div>
+
+                                {/* Description */}
+                                <div className="bg-white rounded-xl p-6 border border-purple-100">
+                                    <h2 className="text-xl font-bold text-gray-900 mb-4">Description</h2>
+                                    <p className="text-gray-600 leading-relaxed">{property.description}</p>
+                                </div>
+
+                                {/* Amenities */}
+                                <div>
+                                    <h2 className="text-xl font-bold text-gray-900 mb-4">Amenities</h2>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        {amenities.map((amenity, index) => (
+                                            <AmenityItem key={index} icon={amenity.icon} label={amenity.label} />
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                {property.owner?.phone && (
-                                    <p className="flex items-center space-x-2 text-sm">
-                                        <Phone className="h-5 w-5 text-primary-600" />
-                                        <span>{property.owner.phone}</span>
-                                    </p>
-                                )}
-                                {property.owner?.email && (
-                                    <p className="flex items-center space-x-2 text-sm">
-                                        <Mail className="h-5 w-5 text-primary-600" />
-                                        <span>{property.owner.email}</span>
-                                    </p>
-                                )}
+
+                            {/* Sidebar */}
+                            <div className="space-y-6">
+                                {/* Contact Form */}
+                                <div className="bg-white rounded-xl p-6 border border-purple-100">
+                                    <h2 className="text-xl font-bold text-gray-900 mb-4">Schedule a Tour</h2>
+                                    <form className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                                                placeholder="Your name"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                            <input
+                                                type="email"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                                                placeholder="Your email"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                            <input
+                                                type="tel"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                                                placeholder="Your phone"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                                            <textarea
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                                                rows="4"
+                                                placeholder="I'm interested in this property..."
+                                            />
+                                        </div>
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            className="w-full px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-purple-200 hover:shadow-xl"
+                                        >
+                                            Schedule Tour
+                                        </motion.button>
+                                    </form>
+                                </div>
+
+                                {/* Additional Info */}
+                                <div className="bg-white rounded-xl p-6 border border-purple-100">
+                                    <h2 className="text-xl font-bold text-gray-900 mb-4">Property Details</h2>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center text-gray-600">
+                                                <CalendarIcon className="w-5 h-5 mr-2 text-purple-500" />
+                                                Year Built
+                                            </div>
+                                            <span className="font-medium text-gray-900">{property.yearBuilt}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center text-gray-600">
+                                                <HomeIcon className="w-5 h-5 mr-2 text-purple-500" />
+                                                Property Type
+                                            </div>
+                                            <span className="font-medium text-gray-900 capitalize">{property.type}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center text-gray-600">
+                                                <DocumentTextIcon className="w-5 h-5 mr-2 text-purple-500" />
+                                                Status
+                                            </div>
+                                            <span className="font-medium text-gray-900">{property.status}</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Image Modal */}
-            {showImageModal && (
-                <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
-                    <button
-                        onClick={() => setShowImageModal(false)}
-                        className="absolute top-4 right-4 text-white hover:text-gray-300"
-                    >
-                        <X className="h-8 w-8" />
-                    </button>
-                    <img
-                        src={currentImage}
-                        alt={property.title}
-                        className="max-w-full max-h-[90vh] object-contain"
-                    />
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full">
-                        {currentImageIndex + 1} / {images.length}
-                    </div>
-                </div>
-            )}
-
-            {/* Contact Form Modal */}
-            {showContactForm && (
-                <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-                    <div className="bg-white rounded-lg max-w-md w-full mx-4 p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-semibold">Contact Agent</h3>
-                            <button
-                                onClick={() => setShowContactForm(false)}
-                                className="text-gray-400 hover:text-gray-500"
-                            >
-                                <X className="h-6 w-6" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleContactSubmit} className="space-y-4">
-                            <div>
-                                <label htmlFor="name" className="form-label">Name</label>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    value={contactForm.name}
-                                    onChange={(e) => setContactForm(prev => ({
-                                        ...prev,
-                                        name: e.target.value
-                                    }))}
-                                    className="input-field"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="email" className="form-label">Email</label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    value={contactForm.email}
-                                    onChange={(e) => setContactForm(prev => ({
-                                        ...prev,
-                                        email: e.target.value
-                                    }))}
-                                    className="input-field"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="phone" className="form-label">Phone</label>
-                                <input
-                                    type="tel"
-                                    id="phone"
-                                    value={contactForm.phone}
-                                    onChange={(e) => setContactForm(prev => ({
-                                        ...prev,
-                                        phone: e.target.value
-                                    }))}
-                                    className="input-field"
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="message" className="form-label">Message</label>
-                                <textarea
-                                    id="message"
-                                    value={contactForm.message}
-                                    onChange={(e) => setContactForm(prev => ({
-                                        ...prev,
-                                        message: e.target.value
-                                    }))}
-                                    className="input-field"
-                                    rows="4"
-                                    required
-                                ></textarea>
-                            </div>
-                            <button type="submit" className="w-full btn btn-primary">
-                                Send Message
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
-        </div>
+            </PageTransition>
+        </AnimatePresence>
     );
-}
-
-PropertyDetails.propTypes = {
-    property: PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        title: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-        price: PropTypes.number.isRequired,
-        property_type: PropTypes.string.isRequired,
-        bedrooms: PropTypes.number.isRequired,
-        bathrooms: PropTypes.number.isRequired,
-        area: PropTypes.number.isRequired,
-        images: PropTypes.arrayOf(PropTypes.string),
-        features: PropTypes.arrayOf(PropTypes.string),
-        address: PropTypes.string.isRequired,
-        city: PropTypes.string.isRequired,
-        state: PropTypes.string.isRequired,
-        zip_code: PropTypes.string.isRequired,
-        owner: PropTypes.shape({
-            id: PropTypes.number.isRequired,
-            name: PropTypes.string.isRequired,
-            email: PropTypes.string,
-            phone: PropTypes.string,
-        }),
-        reviews: PropTypes.arrayOf(
-            PropTypes.shape({
-                id: PropTypes.number.isRequired,
-                rating: PropTypes.number.isRequired,
-                comment: PropTypes.string.isRequired,
-                user: PropTypes.shape({
-                    id: PropTypes.number.isRequired,
-                    name: PropTypes.string.isRequired,
-                }),
-            })
-        ),
-    }),
-}; 
+} 

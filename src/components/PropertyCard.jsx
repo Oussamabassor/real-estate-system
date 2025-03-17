@@ -116,8 +116,8 @@ export default function PropertyCard({ property }) {
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setIsLiked(!isLiked)}
                         className={`p-2.5 rounded-full backdrop-blur-sm transition-all duration-300 ${isLiked
-                                ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
-                                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-purple-500 hover:shadow-lg'
+                            ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                            : 'bg-white/90 text-gray-600 hover:bg-white hover:text-purple-500 hover:shadow-lg'
                             }`}
                         aria-label={isLiked ? "Remove from favorites" : "Add to favorites"}
                     >
