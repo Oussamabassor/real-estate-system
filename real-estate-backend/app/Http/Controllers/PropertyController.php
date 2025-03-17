@@ -87,7 +87,13 @@ class PropertyController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $properties
+            'data' => [
+                'data' => $properties->items(),
+                'current_page' => $properties->currentPage(),
+                'last_page' => $properties->lastPage(),
+                'per_page' => $properties->perPage(),
+                'total' => $properties->total()
+            ]
         ]);
     }
 
@@ -167,6 +173,9 @@ class PropertyController extends Controller
     {
         $property = Property::with(['owner', 'reviews.user'])
             ->findOrFail($id);
+
+        // Ensure images is always an array
+        $property->images = $property->images ?? [];
 
         return response()->json([
             'status' => 'success',

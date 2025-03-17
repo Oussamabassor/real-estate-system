@@ -4,6 +4,9 @@ import { motion } from 'framer-motion';
 import { faBath, faBed } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { HomeIcon, Square2StackIcon } from '@heroicons/react/24/outline';
+import { useState } from 'react';
+
+const DEFAULT_IMAGE = 'https://picsum.photos/600/400'; // More reliable placeholder service
 
 export default function PropertyCard({ property }) {
     const {
@@ -19,6 +22,8 @@ export default function PropertyCard({ property }) {
         floor,
     } = property;
 
+    const [imageError, setImageError] = useState(false);
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -33,9 +38,14 @@ export default function PropertyCard({ property }) {
                 transition={{ duration: 0.3 }}
             >
                 <img
-                    src={images[0]}
+                    src={!imageError && images?.[0] ? images[0] : DEFAULT_IMAGE}
                     alt={title}
                     className="object-cover w-full h-full transition-transform duration-300"
+                    onError={(e) => {
+                        e.target.onerror = null; // Prevent infinite loop
+                        setImageError(true);
+                        e.target.src = DEFAULT_IMAGE;
+                    }}
                 />
             </motion.div>
             <div className="p-4">
@@ -91,7 +101,7 @@ export default function PropertyCard({ property }) {
                             <span>{area} m²</span>
                         </motion.div>
                     </div>
-                    {type === 'apartment' && (
+                    {type === 'apartment' && floor && (
                         <motion.div
                             className="flex items-center"
                             whileHover={{ scale: 1.05 }}

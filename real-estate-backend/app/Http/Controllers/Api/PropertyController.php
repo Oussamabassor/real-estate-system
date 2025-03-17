@@ -15,7 +15,7 @@ class PropertyController extends Controller
 
         // Apply filters
         if ($request->has('type')) {
-            $query->where('type', $request->type);
+            $query->where('property_type', $request->type);
         }
 
         if ($request->has('min_price')) {
@@ -35,7 +35,10 @@ class PropertyController extends Controller
         }
 
         if ($request->has('location')) {
-            $query->where('location', 'like', '%' . $request->location . '%');
+            $query->where(function($q) use ($request) {
+                $q->where('city', 'like', '%' . $request->location . '%')
+                  ->orWhere('address', 'like', '%' . $request->location . '%');
+            });
         }
 
         // Apply sorting
@@ -43,10 +46,14 @@ class PropertyController extends Controller
         $sortDirection = $request->get('sort_direction', 'desc');
         $query->orderBy($sortField, $sortDirection);
 
-        // Get paginated results
-        $properties = $query->with('agent')->paginate($request->get('per_page', 12));
+        // Get paginated results with more items per page
+        $properties = $query->with('owner')->paginate($request->get('per_page', 24));
 
-        return response()->json($properties);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Properties retrieved successfully',
+            'data' => $properties
+        ]);
     }
 
     public function show($id)

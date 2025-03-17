@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { propertyApi } from '../services/api';
-import PropertyCard from '../components/PropertyCard';
+import PropertyGrid from '../components/PropertyGrid';
+import Layout from '../components/Layout';
 import {
     AdjustmentsHorizontalIcon,
     BuildingOfficeIcon,
@@ -10,12 +10,14 @@ import {
     XMarkIcon,
     FunnelIcon,
     ArrowsUpDownIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
 } from '@heroicons/react/24/outline';
+import { useProperties } from '../hooks/useProperties';
 
 export default function Properties() {
-    const [properties, setProperties] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState({
         type: 'all',
         minPrice: '',
@@ -26,60 +28,55 @@ export default function Properties() {
         maxArea: '',
         sortBy: 'price_asc'
     });
-    const [showFilters, setShowFilters] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        fetchProperties();
-    }, []);
-
-    const fetchProperties = async () => {
-        try {
-            setLoading(true);
-            const { data } = await propertyApi.getAll();
-            setProperties(data);
-            setError(null);
-        } catch (err) {
-            setError('Failed to load properties');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleFilterChange = (e) => {
-        const { name, value } = e.target;
-        setFilters(prev => ({ ...prev, [name]: value }));
-    };
-
-    const resetFilters = () => {
-        setFilters({
-            type: 'all',
-            minPrice: '',
-            maxPrice: '',
-            bedrooms: '',
-            bathrooms: '',
-            minArea: '',
-            maxArea: '',
-            sortBy: 'price_asc'
-        });
-        setSearchQuery('');
-    };
+    const { data, isLoading, error } = useProperties(currentPage, 12);
+    const properties = data?.properties || [];
+    const totalProperties = data?.total || 0;
+    const lastPage = data?.lastPage || 1;
 
     const filteredProperties = properties.filter(property => {
-        const matchesSearch = !searchQuery ||
-            property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            property.description.toLowerCase().includes(searchQuery.toLowerCase());
+        // Search filter
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            if (!property.title.toLowerCase().includes(query) &&
+                !property.description.toLowerCase().includes(query)) {
+                return false;
+            }
+        }
 
-        const matchesType = filters.type === 'all' || property.type === filters.type;
-        const matchesMinPrice = !filters.minPrice || property.price >= Number(filters.minPrice);
-        const matchesMaxPrice = !filters.maxPrice || property.price <= Number(filters.maxPrice);
-        const matchesBedrooms = !filters.bedrooms || property.bedrooms >= Number(filters.bedrooms);
-        const matchesBathrooms = !filters.bathrooms || property.bathrooms >= Number(filters.bathrooms);
-        const matchesMinArea = !filters.minArea || property.area >= Number(filters.minArea);
-        const matchesMaxArea = !filters.maxArea || property.area <= Number(filters.maxArea);
+        // Type filter
+        if (filters.type !== 'all' && property.property_type !== filters.type) {
+            return false;
+        }
 
-        return matchesSearch && matchesType && matchesMinPrice && matchesMaxPrice &&
-            matchesBedrooms && matchesBathrooms && matchesMinArea && matchesMaxArea;
+        // Price filters
+        if (filters.minPrice && property.price < Number(filters.minPrice)) {
+            return false;
+        }
+        if (filters.maxPrice && property.price > Number(filters.maxPrice)) {
+            return false;
+        }
+
+        // Bedroom filter
+        if (filters.bedrooms && property.bedrooms < Number(filters.bedrooms)) {
+            return false;
+        }
+
+        // Bathroom filter
+        if (filters.bathrooms && property.bathrooms < Number(filters.bathrooms)) {
+            return false;
+        }
+
+        // Area filters
+        if (filters.minArea && property.area < Number(filters.minArea)) {
+            return false;
+        }
+        if (filters.maxArea && property.area > Number(filters.maxArea)) {
+            return false;
+        }
+
+        return true;
     }).sort((a, b) => {
         switch (filters.sortBy) {
             case 'price_asc':
@@ -95,19 +92,61 @@ export default function Properties() {
         }
     });
 
-    if (loading) {
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+        setCurrentPage(1); // Reset to first page when filters change
+    };
+
+    const resetFilters = () => {
+        setFilters({
+            type: 'all',
+            minPrice: '',
+            maxPrice: '',
+            bedrooms: '',
+            bathrooms: '',
+            minArea: '',
+            maxArea: '',
+            sortBy: 'price_asc'
+        });
+        setSearchQuery('');
+        setCurrentPage(1);
+    };
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        setCurrentPage(1); // Reset to first page when searching
+    };
+
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="loading-spinner h-12 w-12"></div>
-            </div>
+            <Layout>
+                <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
+                    <div className="loading-spinner h-12 w-12"></div>
+                </div>
+            </Layout>
+        );
+    }
+
+    if (error) {
+        return (
+            <Layout>
+                <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
+                    <div className="text-red-500">{error}</div>
+                </div>
+            </Layout>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
+        <Layout>
             <div className="bg-white shadow">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="md:flex md:items-center md:justify-between">
                         <div className="flex-1 min-w-0">
                             <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
@@ -123,46 +162,48 @@ export default function Properties() {
                                 className="btn btn-secondary inline-flex items-center"
                             >
                                 <AdjustmentsHorizontalIcon className="h-5 w-5 mr-2" />
-                                Filters
+                                {showFilters ? 'Hide Filters' : 'Show Filters'}
                             </button>
                         </div>
                     </div>
 
-                    {/* Search and Sort */}
-                    <div className="mt-6 flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                    {/* Search */}
+                    <form onSubmit={handleSearch} className="mt-6">
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex-1">
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="input-field pl-10"
+                                        placeholder="Search properties..."
+                                    />
                                 </div>
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="input-field pl-10"
-                                    placeholder="Search properties..."
-                                />
+                            </div>
+                            <div className="flex items-center space-x-4">
+                                <select
+                                    value={filters.sortBy}
+                                    onChange={handleFilterChange}
+                                    name="sortBy"
+                                    className="input-field"
+                                >
+                                    <option value="price_asc">Price: Low to High</option>
+                                    <option value="price_desc">Price: High to Low</option>
+                                    <option value="bedrooms_desc">Most Bedrooms</option>
+                                    <option value="area_desc">Largest Area</option>
+                                </select>
                             </div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                            <select
-                                value={filters.sortBy}
-                                onChange={handleFilterChange}
-                                name="sortBy"
-                                className="input-field"
-                            >
-                                <option value="price_asc">Price: Low to High</option>
-                                <option value="price_desc">Price: High to Low</option>
-                                <option value="bedrooms_desc">Most Bedrooms</option>
-                                <option value="area_desc">Largest Area</option>
-                            </select>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
 
             {/* Filters Panel */}
-            <div className={`bg-white border-t border-gray-200 transition-all duration-300 ${showFilters ? 'py-8' : 'py-0 h-0 overflow-hidden'}`}>
+            <div className={`bg-white border-t border-gray-200 transition-all duration-300 ${showFilters ? 'py-8' : 'h-0 overflow-hidden'}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                         <div>
@@ -248,7 +289,7 @@ export default function Properties() {
                         </div>
                     </div>
 
-                    <div className="mt-6 flex justify-end space-x-4">
+                    <div className="mt-6 flex justify-end">
                         <button
                             onClick={resetFilters}
                             className="btn btn-secondary"
@@ -260,57 +301,57 @@ export default function Properties() {
             </div>
 
             {/* Properties Grid */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {error ? (
-                    <div className="text-center text-red-500 animate-fade-in">
-                        <div className="mx-auto h-12 w-12 text-red-500">
-                            <XMarkIcon className="h-12 w-12" />
-                        </div>
-                        <h3 className="mt-2 text-sm font-medium">{error}</h3>
+            <div className="py-6">
+                <PropertyGrid
+                    properties={filteredProperties}
+                    loading={isLoading}
+                />
+
+                {/* Pagination */}
+                {lastPage > 1 && (
+                    <div className="mt-8 flex justify-center">
+                        <nav className="flex items-center space-x-2">
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="btn btn-secondary px-3 py-2 disabled:opacity-50"
+                            >
+                                <ChevronLeftIcon className="h-5 w-5" />
+                            </button>
+                            {[...Array(lastPage)].map((_, i) => (
+                                <button
+                                    key={i + 1}
+                                    onClick={() => handlePageChange(i + 1)}
+                                    className={`btn ${currentPage === i + 1 ? 'btn-primary' : 'btn-secondary'} px-4 py-2`}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === lastPage}
+                                className="btn btn-secondary px-3 py-2 disabled:opacity-50"
+                            >
+                                <ChevronRightIcon className="h-5 w-5" />
+                            </button>
+                        </nav>
                     </div>
-                ) : filteredProperties.length === 0 ? (
-                    <div className="text-center animate-fade-in">
-                        <BuildingOfficeIcon className="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">No properties found</h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Try adjusting your filters or search criteria
-                        </p>
+                )}
+
+                {/* Empty state */}
+                {!isLoading && filteredProperties.length === 0 && !error && (
+                    <div className="text-center p-8">
+                        <h3 className="text-lg font-medium text-gray-900">No properties found</h3>
+                        <p className="mt-1 text-gray-500">Try adjusting your filters or search criteria</p>
                         <button
                             onClick={resetFilters}
                             className="mt-4 btn btn-primary"
                         >
-                            Reset All Filters
+                            Reset Filters
                         </button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {filteredProperties.map((property, index) => (
-                            <div
-                                key={property.id}
-                                className="animate-fade-in"
-                                style={{ animationDelay: `${index * 100}ms` }}
-                            >
-                                <PropertyCard property={property} />
-                            </div>
-                        ))}
                     </div>
                 )}
             </div>
-        </div>
+        </Layout>
     );
-}
-
-Properties.propTypes = {
-    properties: PropTypes.arrayOf(PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        title: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-        price: PropTypes.number.isRequired,
-        type: PropTypes.oneOf(['apartment', 'bungalow']).isRequired,
-        bedrooms: PropTypes.number.isRequired,
-        bathrooms: PropTypes.number.isRequired,
-        area: PropTypes.number.isRequired,
-        images: PropTypes.arrayOf(PropTypes.string).isRequired,
-        floor: PropTypes.number,
-    })),
-}; 
+} 

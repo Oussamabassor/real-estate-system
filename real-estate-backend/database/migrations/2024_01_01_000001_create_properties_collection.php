@@ -11,21 +11,29 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('properties', function (Blueprint $table) { // تغيير Blueprint بدلاً من collection
+        Schema::create('properties', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('property_type');
+            $table->string('address');
             $table->string('status');
             $table->decimal('price', 10, 2);
             $table->string('city');
             $table->string('state');
             $table->unsignedBigInteger('owner_id');
+            $table->string('zip_code');
+            $table->integer('bedrooms');
+            $table->integer('bathrooms');
+            $table->integer('area');
+            $table->json('features')->nullable();
+            $table->json('images')->nullable();
             $table->boolean('is_featured')->default(false);
             $table->decimal('rating', 3, 2)->nullable();
+            $table->integer('reviews_count')->default(0);
+            $table->softDeletes();
             $table->timestamps();
 
-            // إضافة الفهارس
             $table->index('title');
             $table->index('property_type');
             $table->index('status');

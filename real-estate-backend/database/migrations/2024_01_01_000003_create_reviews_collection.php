@@ -18,6 +18,7 @@ return new class extends Migration
             $table->tinyInteger('rating'); // تقييم بين 1-5
             $table->boolean('is_verified')->default(false);
             $table->text('review')->nullable();
+            $table->softDeletes();
             $table->timestamps();
 
             // إضافة فهارس لتحسين الأداء

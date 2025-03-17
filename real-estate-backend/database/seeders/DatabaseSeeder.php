@@ -19,21 +19,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create admin user
+        // Create test user
         User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('password'),
-            'is_admin' => true,
+            'name' => 'Test User',
+            'email' => 'test@test1.com',
+            'password' => Hash::make('Test@123'),
+            'role' => 'user',
             'is_verified' => true,
-            'email_verified_at' => now(),
+            'phone' => '1234567890'
         ]);
 
-        // Create regular users
-        $users = User::factory(10)->create();
+        // Create additional users
+        $users = User::factory(5)->create();
 
         // Create properties
-        $properties = Property::factory(20)->create([
+        $properties = Property::factory(10)->create([
             'owner_id' => function () use ($users) {
                 return $users->random()->id;
             },
@@ -41,7 +41,7 @@ class DatabaseSeeder extends Seeder
 
         // Create reservations
         foreach ($properties as $property) {
-            Reservation::factory(rand(1, 5))->create([
+            Reservation::factory(rand(1, 3))->create([
                 'property_id' => $property->id,
                 'user_id' => function () use ($users) {
                     return $users->random()->id;
@@ -54,7 +54,7 @@ class DatabaseSeeder extends Seeder
 
         // Create reviews
         foreach ($properties as $property) {
-            Review::factory(rand(1, 10))->create([
+            Review::factory(rand(1, 5))->create([
                 'property_id' => $property->id,
                 'user_id' => function () use ($users) {
                     return $users->random()->id;
@@ -74,7 +74,7 @@ class DatabaseSeeder extends Seeder
 
         // Add some properties to favorites
         foreach ($users as $user) {
-            $favoriteProperties = $properties->random(rand(1, 5));
+            $favoriteProperties = $properties->random(rand(1, 3));
             foreach ($favoriteProperties as $property) {
                 $user->favorites()->attach($property->id);
             }

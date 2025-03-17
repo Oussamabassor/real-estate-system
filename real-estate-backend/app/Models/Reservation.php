@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+    use Illuminate\Database\Eloquent\Model;
 
-class Reservation extends Model
-{
-    use SoftDeletes;
+    class Reservation extends Model
+    {
+        use HasFactory;
+        use SoftDeletes;
 
     // Remove the MongoDB connection
     // protected $connection = 'mongodb';
@@ -106,8 +108,8 @@ class Reservation extends Model
      */
     public function isActive()
     {
-        return $this->status === 'confirmed' && 
-               $this->check_in_date <= now() && 
+        return $this->status === 'confirmed' &&
+               $this->check_in_date <= now() &&
                $this->check_out_date >= now();
     }
 
@@ -116,7 +118,7 @@ class Reservation extends Model
      */
     public function isUpcoming()
     {
-        return $this->status === 'confirmed' && 
+        return $this->status === 'confirmed' &&
                $this->check_in_date > now();
     }
 
@@ -133,8 +135,8 @@ class Reservation extends Model
      */
     public function canBeCancelled()
     {
-        return $this->status === 'pending' || 
-               ($this->status === 'confirmed' && 
+        return $this->status === 'pending' ||
+               ($this->status === 'confirmed' &&
                 $this->check_in_date > now()->addDays(24));
     }
 
@@ -153,4 +155,4 @@ class Reservation extends Model
     {
         return $this->total_price / $this->nights;
     }
-} 
+}

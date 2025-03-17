@@ -46,8 +46,8 @@ export default function PropertyDetails() {
     const fetchPropertyDetails = async () => {
         try {
             setLoading(true);
-            const { data } = await propertyApi.getById(id);
-            setProperty(data);
+            const response = await propertyApi.getById(id);
+            setProperty(response.data?.data || null);
             setError(null);
             // Check if property is in user's favorites
             if (user) {
@@ -56,12 +56,15 @@ export default function PropertyDetails() {
             }
         } catch (err) {
             setError('Failed to load property details');
+            setProperty(null);
         } finally {
             setLoading(false);
         }
     };
 
     const handleImageNavigation = (direction) => {
+        if (!property?.images?.length) return;
+
         if (direction === 'next') {
             setCurrentImageIndex((prev) =>
                 prev === property.images.length - 1 ? 0 : prev + 1
@@ -89,14 +92,17 @@ export default function PropertyDetails() {
     const handleContactSubmit = async (e) => {
         e.preventDefault();
         try {
-            await propertyApi.contactAgent({
+            await propertyApi.contactOwner({
                 propertyId: id,
+                ownerId: property.owner.id,
                 ...contactForm
             });
             setShowContactForm(false);
-            // Show success message
+            // Show success message using a toast or alert
+            alert('Message sent successfully!');
         } catch (err) {
-            // Show error message
+            // Show error message using a toast or alert
+            alert('Failed to send message. Please try again.');
         }
     };
 
@@ -123,42 +129,56 @@ export default function PropertyDetails() {
         );
     }
 
+    // Ensure we have images array
+    const images = property.images || [];
+    const currentImage = images[currentImageIndex] || '';
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Image Gallery */}
             <div className="relative h-[60vh] bg-gray-900">
-                <img
-                    src={property.images[currentImageIndex]}
-                    alt={property.title}
-                    className="w-full h-full object-cover cursor-pointer transition-opacity"
-                    onClick={() => setShowImageModal(true)}
-                />
+                {currentImage ? (
+                    <img
+                        src={currentImage}
+                        alt={property.title}
+                        className="w-full h-full object-cover cursor-pointer transition-opacity"
+                        onClick={() => setShowImageModal(true)}
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-white">
+                        No image available
+                    </div>
+                )}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
                     <div className="max-w-7xl mx-auto">
                         <h1 className="text-4xl font-bold text-white mb-2">{property.title}</h1>
                         <div className="flex items-center text-white space-x-4">
                             <MapPin className="h-5 w-5" />
-                            <span>{property.location}</span>
+                            <span>{property.address}, {property.city}, {property.state} {property.zip_code}</span>
                         </div>
                     </div>
                 </div>
                 {/* Image Navigation */}
-                <button
-                    onClick={() => handleImageNavigation('prev')}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
-                >
-                    <ChevronLeft className="h-6 w-6" />
-                </button>
-                <button
-                    onClick={() => handleImageNavigation('next')}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
-                >
-                    <ChevronRight className="h-6 w-6" />
-                </button>
-                {/* Image Counter */}
-                <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full">
-                    {currentImageIndex + 1} / {property.images.length}
-                </div>
+                {images.length > 1 && (
+                    <>
+                        <button
+                            onClick={() => handleImageNavigation('prev')}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
+                        >
+                            <ChevronLeft className="h-6 w-6" />
+                        </button>
+                        <button
+                            onClick={() => handleImageNavigation('next')}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
+                        >
+                            <ChevronRight className="h-6 w-6" />
+                        </button>
+                        {/* Image Counter */}
+                        <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full">
+                            {currentImageIndex + 1} / {images.length}
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Content */}
@@ -259,28 +279,30 @@ export default function PropertyDetails() {
                             </button>
                         </div>
 
-                        {/* Agent Info */}
+                        {/* Agent/Owner Info */}
                         <div className="bg-white rounded-lg shadow-sm p-6">
                             <div className="flex items-center space-x-4 mb-4">
-                                <img
-                                    src={property.agent.avatar}
-                                    alt={property.agent.name}
-                                    className="h-16 w-16 rounded-full object-cover"
-                                />
+                                <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                                    {property.owner?.name?.charAt(0) || '?'}
+                                </div>
                                 <div>
-                                    <h3 className="font-semibold">{property.agent.name}</h3>
-                                    <p className="text-sm text-gray-500">{property.agent.title}</p>
+                                    <h3 className="font-semibold">{property.owner?.name || 'Owner'}</h3>
+                                    <p className="text-sm text-gray-500">Property Owner</p>
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <p className="flex items-center space-x-2 text-sm">
-                                    <Phone className="h-5 w-5 text-primary-600" />
-                                    <span>{property.agent.phone}</span>
-                                </p>
-                                <p className="flex items-center space-x-2 text-sm">
-                                    <Mail className="h-5 w-5 text-primary-600" />
-                                    <span>{property.agent.email}</span>
-                                </p>
+                                {property.owner?.phone && (
+                                    <p className="flex items-center space-x-2 text-sm">
+                                        <Phone className="h-5 w-5 text-primary-600" />
+                                        <span>{property.owner.phone}</span>
+                                    </p>
+                                )}
+                                {property.owner?.email && (
+                                    <p className="flex items-center space-x-2 text-sm">
+                                        <Mail className="h-5 w-5 text-primary-600" />
+                                        <span>{property.owner.email}</span>
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -297,12 +319,12 @@ export default function PropertyDetails() {
                         <X className="h-8 w-8" />
                     </button>
                     <img
-                        src={property.images[currentImageIndex]}
+                        src={currentImage}
                         alt={property.title}
                         className="max-w-full max-h-[90vh] object-contain"
                     />
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full">
-                        {currentImageIndex + 1} / {property.images.length}
+                        {currentImageIndex + 1} / {images.length}
                     </div>
                 </div>
             )}
@@ -393,20 +415,32 @@ PropertyDetails.propTypes = {
         title: PropTypes.string.isRequired,
         description: PropTypes.string.isRequired,
         price: PropTypes.number.isRequired,
-        type: PropTypes.oneOf(['apartment', 'bungalow']).isRequired,
+        property_type: PropTypes.string.isRequired,
         bedrooms: PropTypes.number.isRequired,
         bathrooms: PropTypes.number.isRequired,
         area: PropTypes.number.isRequired,
-        images: PropTypes.arrayOf(PropTypes.string).isRequired,
-        floor: PropTypes.number,
+        images: PropTypes.arrayOf(PropTypes.string),
         features: PropTypes.arrayOf(PropTypes.string),
-        location: PropTypes.string.isRequired,
-        agent: PropTypes.shape({
+        address: PropTypes.string.isRequired,
+        city: PropTypes.string.isRequired,
+        state: PropTypes.string.isRequired,
+        zip_code: PropTypes.string.isRequired,
+        owner: PropTypes.shape({
+            id: PropTypes.number.isRequired,
             name: PropTypes.string.isRequired,
-            title: PropTypes.string.isRequired,
-            phone: PropTypes.string.isRequired,
-            email: PropTypes.string.isRequired,
-            avatar: PropTypes.string.isRequired,
-        }).isRequired,
+            email: PropTypes.string,
+            phone: PropTypes.string,
+        }),
+        reviews: PropTypes.arrayOf(
+            PropTypes.shape({
+                id: PropTypes.number.isRequired,
+                rating: PropTypes.number.isRequired,
+                comment: PropTypes.string.isRequired,
+                user: PropTypes.shape({
+                    id: PropTypes.number.isRequired,
+                    name: PropTypes.string.isRequired,
+                }),
+            })
+        ),
     }),
 }; 

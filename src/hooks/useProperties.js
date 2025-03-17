@@ -1,27 +1,57 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { propertyService } from '../services/propertyService';
 import { queryKeys } from '../services/queryClient';
+import api from '../services/api';
 
-export function useProperties(page = 1, perPage = 10) {
+export function useProperties(page = 1, perPage = 12) {
   return useQuery({
-    queryKey: [...queryKeys.properties.all, page, perPage],
-    queryFn: () => propertyService.getAll(page, perPage),
-    keepPreviousData: true,
+    queryKey: ['properties', page, perPage],
+    queryFn: async () => {
+      const { data } = await propertyService.getAll(page, perPage);
+      return {
+        properties: data.data || [],
+        total: data.total || 0,
+        currentPage: data.current_page || 1,
+        lastPage: data.last_page || 1
+      };
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    cacheTime: 1000 * 60 * 30, // 30 minutes
   });
 }
 
 export function useProperty(id) {
   return useQuery({
-    queryKey: queryKeys.properties.detail(id),
-    queryFn: () => propertyService.getById(id),
+    queryKey: ['property', id],
+    queryFn: async () => {
+      const { data } = await api.get(`/properties/${id}`);
+      return data.data;
+    },
     enabled: !!id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    cacheTime: 1000 * 60 * 30, // 30 minutes
   });
 }
 
-export function useFeaturedProperties() {
+export function useFeaturedProperties(limit = 9) {
   return useQuery({
-    queryKey: queryKeys.properties.featured,
-    queryFn: () => propertyService.getAll(1, 6),
+    queryKey: ['properties', 'featured', limit],
+    queryFn: async () => {
+      try {
+        const response = await propertyService.getFeatured(limit);
+        console.log('Featured properties response:', response); // Debug log
+        if (!response.data || response.data.length === 0) {
+          console.warn('No featured properties found, using mock data');
+        }
+        return response.data;
+      } catch (error) {
+        console.error('Error in useFeaturedProperties:', error);
+        throw error;
+      }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    cacheTime: 1000 * 60 * 30, // 30 minutes
+    retry: 1, // Only retry once
   });
 }
 

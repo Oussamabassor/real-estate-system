@@ -25,15 +25,25 @@ export function useAuth() {
         }
     }, []);
 
-    const login = async (email, password) => {
+    const login = async (loginData) => {
         try {
             setState(prev => ({ ...prev, loading: true, error: null }));
-            const { data } = await userApi.login(email, password);
-            localStorage.setItem('token', data.token);
-            setState({ user: data.user, loading: false, error: null });
+            const { data } = await userApi.login(loginData);
+
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                setState({ user: data.user, loading: false, error: null });
+            } else if (data.data?.token) {
+                localStorage.setItem('token', data.data.token);
+                setState({ user: data.data.user, loading: false, error: null });
+            } else {
+                throw new Error('No token received');
+            }
+
             return data;
         } catch (error) {
-            setState(prev => ({ ...prev, loading: false, error: 'Invalid credentials' }));
+            const errorMessage = error.response?.data?.message || 'Invalid credentials';
+            setState(prev => ({ ...prev, loading: false, error: errorMessage }));
             throw error;
         }
     };
@@ -46,7 +56,10 @@ export function useAuth() {
             setState({ user: data.user, loading: false, error: null });
             return data;
         } catch (error) {
-            setState(prev => ({ ...prev, loading: false, error: 'Registration failed' }));
+            const errorMessage = error.response?.data?.errors
+                ? Object.values(error.response.data.errors).flat().join('\n')
+                : error.response?.data?.message || 'Registration failed';
+            setState(prev => ({ ...prev, loading: false, error: errorMessage }));
             throw error;
         }
     };

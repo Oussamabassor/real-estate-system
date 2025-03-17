@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable
 {
@@ -28,6 +28,7 @@ class User extends Authenticatable
         'state',
         'zip_code',
         'avatar',
+        'role',
         'is_admin',
         'is_verified',
         'email_verified_at',
@@ -254,9 +255,11 @@ class User extends Authenticatable
         return $this->favorites()->count();
     }
 
-    // Add a mutator to hash the password when setting it
+    /**
+     * Automatically hash the password when it's set.
+     */
     public function setPasswordAttribute($value)
     {
-        $this->attributes['password'] = bcrypt($value);
+        $this->attributes['password'] = Hash::make($value);
     }
 }

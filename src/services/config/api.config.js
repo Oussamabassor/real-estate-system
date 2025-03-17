@@ -11,6 +11,7 @@ const apiConfig = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     },
+    withCredentials: true,
     timeout: 15000, // 15 seconds
 };
 
@@ -91,4 +92,4 @@ api.interceptors.response.use(
     }
 );
 
-export default api; 
+export default api;

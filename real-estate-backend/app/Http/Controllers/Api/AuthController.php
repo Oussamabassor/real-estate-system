@@ -53,22 +53,76 @@ class AuthController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        // Log the attempt details (excluding password)
+        \Log::info('Login attempt', [
+            'email' => $request->email,
+            'remember' => $request->boolean('remember'),
+            'headers' => $request->headers->all()
+        ]);
+
+        if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+            // Log failed attempt
+            \Log::warning('Login failed - invalid credentials', [
+                'email' => $request->email
+            ]);
+
             return response()->json([
-                'message' => 'Invalid login credentials'
+                'message' => 'Invalid credentials'
             ], 401);
         }
 
         $user = User::where('email', $request->email)->firstOrFail();
+        
+        // Log successful authentication
+        \Log::info('User authenticated successfully', [
+            'user_id' => $user->id,
+            'email' => $user->email
+        ]);
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Update last login
         $user->update(['last_login' => now()]);
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token
+        // Ensure session is started and regenerated
+        if (!$request->session()->isStarted()) {
+            $request->session()->start();
+        }
+        $request->session()->regenerate();
+
+        // Log session details
+        \Log::info('Session details', [
+            'session_id' => session()->getId(),
+            'session_started' => session()->isStarted(),
+            'session_token' => csrf_token()
         ]);
+
+        $response = response()->json([
+            'status' => 'success',
+            'message' => 'User logged in successfully',
+            'data' => [
+                'user' => $user,
+                'token' => $token,
+                'session_id' => session()->getId()
+            ]
+        ]);
+
+        // Log response cookies
+        \Log::info('Response cookies', [
+            'cookies' => collect($response->headers->getCookies())->map(function($cookie) {
+                return [
+                    'name' => $cookie->getName(),
+                    'value' => 'hidden',
+                    'domain' => $cookie->getDomain(),
+                    'path' => $cookie->getPath(),
+                    'secure' => $cookie->isSecure(),
+                    'httpOnly' => $cookie->isHttpOnly(),
+                    'sameSite' => $cookie->getSameSite()
+                ];
+            })->toArray()
+        ]);
+
+        return $response;
     }
 
     public function logout(Request $request)

@@ -20,14 +20,12 @@ return new class extends Migration
             $table->string('status')->default('pending');
             $table->timestamps();
 
-            // إضافة فهارس لتحسين البحث والأداء
             $table->index('property_id');
             $table->index('user_id');
             $table->index('check_in_date');
             $table->index('check_out_date');
             $table->index('status');
 
-            // إضافة قيود العلاقات
             $table->foreign('property_id')->references('id')->on('properties')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });

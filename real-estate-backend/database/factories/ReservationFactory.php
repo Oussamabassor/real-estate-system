@@ -9,20 +9,14 @@ class ReservationFactory extends Factory
 {
     protected $model = Reservation::class;
 
-    public function definition(): array
+    public function definition()
     {
-        $checkIn = fake()->dateTimeBetween('now', '+6 months');
-        $checkOut = fake()->dateTimeBetween($checkIn, '+30 days');
-
         return [
-            'property_id' => fake()->numberBetween(1, 20),
-            'user_id' => fake()->numberBetween(1, 10),
-            'check_in_date' => $checkIn,
-            'check_out_date' => $checkOut,
-            'guests' => fake()->numberBetween(1, 10),
-            'special_requests' => fake()->optional(0.7)->sentence(),
-            'status' => fake()->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
-            'total_price' => fake()->numberBetween(1000, 10000),
+            'user_id' => \App\Models\User::factory(),
+            'property_id' => \App\Models\Property::factory(),
+            'check_in_date' => $this->faker->date(),
+            'check_out_date' => $this->faker->date(),
+            'status' => $this->faker->randomElement(['pending', 'confirmed', 'canceled']),
         ];
     }
 } 

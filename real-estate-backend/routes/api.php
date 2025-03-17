@@ -7,6 +7,7 @@ use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\Api\StatsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,13 +21,13 @@ use App\Http\Controllers\UserController;
 */
 
 // Public routes
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [App\Http\Controllers\Api\AuthController::class, 'register']);
+Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
 
 // Properties routes (public)
 Route::get('/properties', [PropertyController::class, 'index']);
-Route::get('/properties/{id}', [PropertyController::class, 'show']);
 Route::get('/properties/featured', [PropertyController::class, 'featured']);
+Route::get('/properties/{id}', [PropertyController::class, 'show']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -69,3 +70,5 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/reviews', [ReviewController::class, 'adminIndex']);
     Route::put('/admin/reviews/{id}/verify', [ReviewController::class, 'verify']);
 });
+
+Route::get('/stats', [StatsController::class, 'index']);
