@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
+import { BuildingOfficeIcon } from '@heroicons/react/24/outline';
 import PropertyCard from './PropertyCard';
 
-const PropertyGrid = ({ properties = [], loading }) => {
+const PropertyGrid = ({ properties = [], loading, onContactClick }) => {
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -43,14 +44,26 @@ const PropertyGrid = ({ properties = [], loading }) => {
     if (loading) {
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {[...Array(8)].map((_, index) => (
-                        <div key={index} className="bg-white rounded-lg shadow-md p-4 animate-pulse">
-                            <div className="w-full h-48 bg-gray-200 rounded-lg mb-4"></div>
-                            <div className="space-y-3">
-                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {[...Array(6)].map((_, index) => (
+                        <div
+                            key={index}
+                            className="bg-white rounded-2xl shadow-lg overflow-hidden h-[600px] border border-purple-100"
+                        >
+                            <div className="h-[240px] bg-gradient-to-r from-purple-50 to-purple-100 animate-pulse rounded-t-2xl" />
+                            <div className="p-6 space-y-4">
+                                <div className="h-4 bg-purple-100 rounded w-1/2 animate-pulse" />
+                                <div className="h-8 bg-purple-100 rounded w-3/4 animate-pulse" />
+                                <div className="h-16 bg-purple-100 rounded animate-pulse" />
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[...Array(4)].map((_, i) => (
+                                        <div key={i} className="h-10 bg-purple-100 rounded-lg animate-pulse" />
+                                    ))}
+                                </div>
+                                <div className="flex gap-3 mt-6">
+                                    <div className="h-12 bg-purple-100 rounded-xl flex-1 animate-pulse" />
+                                    <div className="h-12 w-12 bg-purple-100 rounded-xl animate-pulse" />
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -62,10 +75,27 @@ const PropertyGrid = ({ properties = [], loading }) => {
     if (!properties || properties.length === 0) {
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center py-12">
-                    <h3 className="text-lg font-medium text-gray-900">No properties found</h3>
-                    <p className="mt-2 text-sm text-gray-500">Try adjusting your search criteria or check back later.</p>
-                </div>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-16 bg-white rounded-2xl shadow-lg border border-purple-100"
+                >
+                    <BuildingOfficeIcon className="mx-auto h-16 w-16 text-purple-400" />
+                    <h3 className="mt-6 text-xl font-semibold text-gray-900">
+                        No properties found
+                    </h3>
+                    <p className="mt-2 text-gray-500 max-w-sm mx-auto">
+                        We couldn't find any properties matching your criteria. Try adjusting your search filters or check back later.
+                    </p>
+                    <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="mt-6 px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-purple-200 hover:shadow-xl"
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    >
+                        Modify Search
+                    </motion.button>
+                </motion.div>
             </div>
         );
     }
@@ -78,25 +108,19 @@ const PropertyGrid = ({ properties = [], loading }) => {
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-fr"
                 >
                     {properties.map((property, index) => (
                         <motion.div
                             key={property.id || index}
                             variants={itemVariants}
                             layout
-                            whileHover={{
-                                scale: 1.02,
-                                transition: {
-                                    type: "spring",
-                                    stiffness: 300,
-                                    damping: 20
-                                }
-                            }}
-                            whileTap={{ scale: 0.98 }}
-                            className="property-card-wrapper"
+                            className="h-full"
                         >
-                            <PropertyCard property={property} />
+                            <PropertyCard
+                                property={property}
+                                onContactClick={onContactClick}
+                            />
                         </motion.div>
                     ))}
                 </motion.div>
@@ -118,7 +142,8 @@ PropertyGrid.propTypes = {
         type: PropTypes.string,
         status: PropTypes.string,
     })),
-    loading: PropTypes.bool
+    loading: PropTypes.bool,
+    onContactClick: PropTypes.func
 };
 
 export default PropertyGrid; 
