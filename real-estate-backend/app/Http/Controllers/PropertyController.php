@@ -8,93 +8,98 @@ use Illuminate\Support\Facades\Validator;
 
 class PropertyController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
-        $query = Property::with(['owner', 'reviews']);
+        try {
+            $query = Property::with(['owner', 'reviews']);
 
-        // Filter by property type
-        if ($request->has('property_type')) {
-            $query->where('property_type', $request->property_type);
-        }
+            // Filter by property type
+            if ($request->has('property_type')) {
+                $query->where('property_type', $request->property_type);
+            }
 
-        // Filter by price range
-        if ($request->has('min_price')) {
-            $query->where('price', '>=', $request->min_price);
-        }
-        if ($request->has('max_price')) {
-            $query->where('price', '<=', $request->max_price);
-        }
+            // Filter by price range
+            if ($request->has('min_price')) {
+                $query->where('price', '>=', $request->min_price);
+            }
+            if ($request->has('max_price')) {
+                $query->where('price', '<=', $request->max_price);
+            }
 
-        // Filter by bedrooms
-        if ($request->has('bedrooms')) {
-            $query->where('bedrooms', '>=', $request->bedrooms);
-        }
+            // Filter by bedrooms
+            if ($request->has('bedrooms')) {
+                $query->where('bedrooms', '>=', $request->bedrooms);
+            }
 
-        // Filter by bathrooms
-        if ($request->has('bathrooms')) {
-            $query->where('bathrooms', '>=', $request->bathrooms);
-        }
+            // Filter by bathrooms
+            if ($request->has('bathrooms')) {
+                $query->where('bathrooms', '>=', $request->bathrooms);
+            }
 
-        // Filter by area
-        if ($request->has('min_area')) {
-            $query->where('area', '>=', $request->min_area);
-        }
-        if ($request->has('max_area')) {
-            $query->where('area', '<=', $request->max_area);
-        }
+            // Filter by area
+            if ($request->has('min_area')) {
+                $query->where('area', '>=', $request->min_area);
+            }
+            if ($request->has('max_area')) {
+                $query->where('area', '<=', $request->max_area);
+            }
 
-        // Filter by city
-        if ($request->has('city')) {
-            $query->where('city', $request->city);
+            // Filter by city
+            if ($request->has('city')) {
+                $query->where('city', $request->city);
+            }
+
+            // Filter by state
+            if ($request->has('state')) {
+                $query->where('state', $request->state);
+            }
+
+            // Filter by rating
+            if ($request->has('min_rating')) {
+                $query->where('rating', '>=', $request->min_rating);
+            }
+
+            // Filter by status
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
+
+            // Search by title or description
+            if ($request->has('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%");
+                });
+            }
+
+            // Sort by
+            if ($request->has('sort_by')) {
+                $direction = $request->has('sort_direction') ? $request->sort_direction : 'asc';
+                $query->orderBy($request->sort_by, $direction);
+            } else {
+                $query->orderBy('created_at', 'desc');
+            }
+
+            $properties = $query->paginate($request->get('per_page', 12));
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'data' => $properties->items(),
+                    'current_page' => $properties->currentPage(),
+                    'last_page' => $properties->lastPage(),
+                    'per_page' => $properties->perPage(),
+                    'total' => $properties->total()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch properties',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Filter by state
-        if ($request->has('state')) {
-            $query->where('state', $request->state);
-        }
-
-        // Filter by rating
-        if ($request->has('min_rating')) {
-            $query->where('rating', '>=', $request->min_rating);
-        }
-
-        // Filter by status
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        // Search by title or description
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        // Sort by
-        if ($request->has('sort_by')) {
-            $direction = $request->has('sort_direction') ? $request->sort_direction : 'asc';
-            $query->orderBy($request->sort_by, $direction);
-        } else {
-            $query->orderBy('created_at', 'desc');
-        }
-
-        $properties = $query->paginate(12);
-
-        return response()->json([
-            'status' => 'success',
-            'data' => [
-                'data' => $properties->items(),
-                'current_page' => $properties->currentPage(),
-                'last_page' => $properties->lastPage(),
-                'per_page' => $properties->perPage(),
-                'total' => $properties->total()
-            ]
-        ]);
     }
 
     /**
@@ -321,4 +326,4 @@ class PropertyController extends Controller
             'data' => $properties
         ]);
     }
-} 
+}

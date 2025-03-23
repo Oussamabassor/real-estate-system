@@ -47,10 +47,21 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Protected route wrapper
-  const ProtectedRoute = ({ children }) => {
+  // Protected route wrapper with role check
+  const ProtectedRoute = ({ children, allowedRoles = ['user', 'admin'] }) => {
     if (!user) {
       return <Navigate to="/login" />;
+    }
+    if (!allowedRoles.includes(user.role)) {
+      return <Navigate to="/" />;
+    }
+    return children;
+  };
+
+  // Admin route wrapper
+  const AdminRoute = ({ children }) => {
+    if (!user || user.role !== 'admin') {
+      return <Navigate to="/" />;
     }
     return children;
   };
@@ -96,15 +107,24 @@ function App() {
               <main className="flex-grow">
                 <Routes>
                   {/* Public Routes */}
-                  <Route path="/" element={<Home />} />
+                  <Route path="/" element={user?.role === 'admin' ? <Navigate to="/dashboard" /> : <Home />} />
                   <Route path="/properties" element={<Properties />} />
                   <Route path="/properties/:id" element={<PropertyDetails />} />
-                  <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+                  <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
+                  <Route path="/contact" element={<Contact />} />
 
-                  {/* Protected Routes */}
+                  {/* Admin Routes */}
+                  <Route
+                    path="/dashboard/*"
+                    element={
+                      <AdminRoute>
+                        <Dashboard />
+                      </AdminRoute>
+                    }
+                  />
+
+                  {/* Protected User Routes */}
                   <Route
                     path="/reservations"
                     element={
@@ -120,7 +140,7 @@ function App() {
                         <Profile />
                       </ProtectedRoute>
                     }
-                    />
+                  />
 
                   {/* 404 Route */}
                   <Route path="*" element={<NotFound />} />

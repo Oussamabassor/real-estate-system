@@ -1,11 +1,11 @@
 import api from '../config/api.config';
 
 /**
- * Base service class with common CRUD operations
+ * Base service class for making API requests
  */
 export default class BaseService {
     /**
-     * @param {string} resourcePath - API resource path
+     * @param {string} resourcePath - Base path for the API resource
      */
     constructor(resourcePath) {
         this.resourcePath = resourcePath;
@@ -22,7 +22,7 @@ export default class BaseService {
             const response = await this.api.get(this.resourcePath, { params });
             return response.data;
         } catch (error) {
-            throw this._handleError(error);
+            throw this.handleError(error);
         }
     }
 
@@ -36,7 +36,7 @@ export default class BaseService {
             const response = await this.api.get(`${this.resourcePath}/${id}`);
             return response.data;
         } catch (error) {
-            throw this._handleError(error);
+            throw this.handleError(error);
         }
     }
 
@@ -50,7 +50,7 @@ export default class BaseService {
             const response = await this.api.post(this.resourcePath, data);
             return response.data;
         } catch (error) {
-            throw this._handleError(error);
+            throw this.handleError(error);
         }
     }
 
@@ -65,7 +65,7 @@ export default class BaseService {
             const response = await this.api.put(`${this.resourcePath}/${id}`, data);
             return response.data;
         } catch (error) {
-            throw this._handleError(error);
+            throw this.handleError(error);
         }
     }
 
@@ -79,27 +79,27 @@ export default class BaseService {
             const response = await this.api.delete(`${this.resourcePath}/${id}`);
             return response.data;
         } catch (error) {
-            throw this._handleError(error);
+            throw this.handleError(error);
         }
     }
 
     /**
-     * Handle API errors
-     * @private
-     * @param {Error} error - Error object
-     * @returns {Error}
+     * Common error handler for API requests
+     * @param {Error} error - Error object from API request
+     * @returns {Error} Standardized error object
      */
-    _handleError(error) {
-        if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
-            return new Error(error.response.data.message || 'An error occurred');
-        } else if (error.request) {
-            // The request was made but no response was received
-            return new Error('No response received from server');
-        } else {
-            // Something happened in setting up the request that triggered an Error
-            return new Error('Error setting up the request');
+    handleError(error) {
+        // If it's a network error or the server is not responding
+        if (!error.response) {
+            return new Error('Network error - Please check your connection and try again');
         }
+
+        // If we got a response with an error status
+        const message = error.response.data?.message || 'An unexpected error occurred';
+        const customError = new Error(message);
+        customError.status = error.response.status;
+        customError.details = error.response.data?.errors || {};
+        
+        return customError;
     }
-} 
+}

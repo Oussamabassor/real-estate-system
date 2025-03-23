@@ -21,14 +21,12 @@ class Review extends Model
         'user_id',
         'rating',
         'comment',
-        'images',
         'is_verified',
     ];
 
     protected $casts = [
         'rating' => 'decimal:1',
         'is_verified' => 'boolean',
-        'images' => 'array',
     ];
 
     /**

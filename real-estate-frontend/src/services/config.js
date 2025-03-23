@@ -1,27 +1,34 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const api = axios.create({
     baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
     },
-    timeout: 10000, // 10 seconds
+    withCredentials: true,
+    timeout: 15000, // 15 seconds
 });
 
 // Request interceptor
 api.interceptors.request.use(
     (config) => {
+        // Add auth token if available
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+        
+        // Add language header if available
+        const lang = localStorage.getItem('language') || 'en';
+        config.headers['Accept-Language'] = lang;
+        
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 // Response interceptor
@@ -56,4 +63,4 @@ api.interceptors.response.use(
     }
 );
 
-export default api; 
+export default api;

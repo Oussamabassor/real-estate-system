@@ -1,77 +1,22 @@
-import axios from "axios";
+import api from './config';
+import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-const BASE_URL = "http://localhost:8000";
-
-console.log("Using BASE_URL:", BASE_URL);
-console.log("Using API_URL:", API_URL);
-
-// Configure axios defaults
-axios.defaults.withCredentials = true;
-axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
-axios.defaults.headers.common["Accept"] = "application/json";
-
-// Create axios instance for API calls
-const api = axios.create({
-  baseURL: API_URL,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    "X-Requested-With": "XMLHttpRequest",
-  }
-});
-
-// Add token to requests if it exists
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Add response interceptor to handle errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("API Error:", {
-      status: error.response?.status,
-      data: error.response?.data,
-      url: error.config?.url
-    });
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-    }
-    return Promise.reject(error);
-  }
-);
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 // User endpoints
 export const userApi = {
   login: async ({ email, password, remember }) => {
     try {
-      // Get CSRF cookie first using the base URL
-      console.log("Fetching CSRF cookie...");
       await axios.get(`${BASE_URL}/sanctum/csrf-cookie`, {
-        withCredentials: true,
-        headers: {
-          Accept: "application/json",
-          "X-Requested-With": "XMLHttpRequest"
-        }
+        withCredentials: true
       });
       
-      console.log("Making login request...");
-      // Make login request using the API URL
       const response = await api.post("/login", {
         email,
         password,
         remember: remember || false
       });
 
-      console.log("Login response:", response.data);
-
-      // Check if login was successful
       if (response.data?.status === 'success' && response.data?.data?.token) {
         const token = response.data.data.token;
         localStorage.setItem("token", token);
@@ -93,43 +38,41 @@ export const userApi = {
     }
   },
   register: async (data) => {
-  try {
-    console.log("Fetching CSRF cookie...");
-    await axios.get(`${BASE_URL}/sanctum/csrf-cookie`);
+    try {
+      await axios.get(`${BASE_URL}/sanctum/csrf-cookie`);
+      const response = await api.post("/register", data);
 
-    console.log("Making registration request...");
-    const response = await api.post("/register", data);
-
-    const token =
-      response.data?.data?.token || response.data?.token || response.data?.access_token;
-
-    if (token) {
-      console.log("Token received, storing in localStorage...");
-      localStorage.setItem("token", token);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    } else {
-      console.warn("No token received in registration response");
+      const token = response.data?.data?.token || response.data?.token;
+      if (token) {
+        localStorage.setItem("token", token);
+        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      }
+      return response.data;
+    } catch (error) {
+      console.error("Registration failed:", error.response?.data || error.message);
+      throw error;
     }
-
-    return response;
-  } catch (error) {
-    console.error("Registration failed:", error.response?.data || error.message);
-    throw error;
-  }
-},
+  },
   getProfile: () => api.get("/profile"),
   updateProfile: (data) => api.put("/profile", data),
+  logout: () => api.post("/logout"),
 };
 
 // Property endpoints
 export const propertyApi = {
-  getAll: (page = 1) => api.get(`/properties?page=${page}`),
+  getAll: (params) => api.get("/properties", { params }),
   getById: (id) => api.get(`/properties/${id}`),
+  getFeatured: () => api.get("/properties/featured"),
+  search: (query) => api.get("/properties/search", { params: { query } }),
   create: (data) => api.post("/properties", data),
   update: (id, data) => api.put(`/properties/${id}`, data),
   delete: (id) => api.delete(`/properties/${id}`),
-  toggleFavorite: (id) => api.post(`/favorites/${id}`),
-  contactOwner: (data) => api.post("/properties/contact", data),
+  toggleFavorite: (id) => api.post(`/properties/${id}/favorite`),
+  getFavorites: () => api.get("/favorites"),
+  getAvailability: (id, startDate, endDate) => 
+    api.get(`/properties/${id}/availability`, {
+      params: { start_date: startDate, end_date: endDate }
+    }),
 };
 
 // Reservation endpoints
@@ -139,14 +82,18 @@ export const reservationApi = {
   create: (data) => api.post("/reservations", data),
   update: (id, data) => api.put(`/reservations/${id}`, data),
   cancel: (id) => api.post(`/reservations/${id}/cancel`),
+  getUpcoming: () => api.get("/reservations/upcoming"),
+  getPast: () => api.get("/reservations/past"),
 };
 
-// Payment endpoints
-export const paymentApi = {
-  createReceipt: (data) => api.post("/payments/receipts", data),
-  getReceipt: (id) => api.get(`/payments/receipts/${id}`),
-  updateStatus: (id, status) =>
-    api.put(`/payments/receipts/${id}/status`, { status }),
+// Admin endpoints
+export const adminApi = {
+  getDashboardStats: () => api.get("/admin/dashboard-stats"),
+  getUsers: (params) => api.get("/admin/users", { params }),
+  updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
+  getReservations: (params) => api.get("/admin/reservations", { params }),
+  updateReservation: (id, data) => api.put(`/admin/reservations/${id}`, data),
 };
 
 export default api;

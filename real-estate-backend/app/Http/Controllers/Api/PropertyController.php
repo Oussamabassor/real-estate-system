@@ -11,54 +11,55 @@ class PropertyController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Property::query();
+        try {
+            $query = Property::query();
 
-        // Apply filters
-        if ($request->has('type')) {
-            $query->where('property_type', $request->type);
+            // Apply filters
+            if ($request->has('type')) {
+                $query->where('property_type', $request->type);
+            }
+
+            if ($request->has('min_price')) {
+                $query->where('price', '>=', $request->min_price);
+            }
+
+            if ($request->has('max_price')) {
+                $query->where('price', '<=', $request->max_price);
+            }
+
+            if ($request->has('bedrooms')) {
+                $query->where('bedrooms', '>=', $request->bedrooms);
+            }
+
+            if ($request->has('bathrooms')) {
+                $query->where('bathrooms', '>=', $request->bathrooms);
+            }
+
+            if ($request->has('location')) {
+                $query->where(function($q) use ($request) {
+                    $q->where('city', 'like', '%' . $request->location . '%')
+                      ->orWhere('address', 'like', '%' . $request->location . '%');
+                });
+            }
+
+            // Apply sorting
+            $sortField = $request->get('sort_by', 'created_at');
+            $sortDirection = $request->get('sort_direction', 'desc');
+            $query->orderBy($sortField, $sortDirection);
+
+            // Get paginated results
+            $properties = $query->with('owner')->paginate($request->get('per_page', 24));
+
+            return response()->json($properties);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching properties: ' . $e->getMessage());
+            return response()->json(['message' => 'An error occurred while fetching properties'], 500);
         }
-
-        if ($request->has('min_price')) {
-            $query->where('price', '>=', $request->min_price);
-        }
-
-        if ($request->has('max_price')) {
-            $query->where('price', '<=', $request->max_price);
-        }
-
-        if ($request->has('bedrooms')) {
-            $query->where('bedrooms', '>=', $request->bedrooms);
-        }
-
-        if ($request->has('bathrooms')) {
-            $query->where('bathrooms', '>=', $request->bathrooms);
-        }
-
-        if ($request->has('location')) {
-            $query->where(function($q) use ($request) {
-                $q->where('city', 'like', '%' . $request->location . '%')
-                  ->orWhere('address', 'like', '%' . $request->location . '%');
-            });
-        }
-
-        // Apply sorting
-        $sortField = $request->get('sort_by', 'created_at');
-        $sortDirection = $request->get('sort_direction', 'desc');
-        $query->orderBy($sortField, $sortDirection);
-
-        // Get paginated results with more items per page
-        $properties = $query->with('owner')->paginate($request->get('per_page', 24));
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Properties retrieved successfully',
-            'data' => $properties
-        ]);
     }
 
     public function show($id)
     {
-        $property = Property::with('agent')->findOrFail($id);
+        $property = Property::with('owner')->findOrFail($id);
         $property->increment('views');
         return response()->json($property);
     }
@@ -73,8 +74,8 @@ class PropertyController extends Controller
             'bedrooms' => 'required|integer|min:0',
             'bathrooms' => 'required|integer|min:0',
             'area' => 'required|numeric|min:0',
-            'type' => 'required|string',
-            'status' => 'required|string',
+            'property_type' => 'required|string',
+            'status' => 'required|string|in:available,rented,sold',
             'images' => 'required|array',
             'features' => 'required|array',
             'is_featured' => 'boolean'
@@ -86,10 +87,10 @@ class PropertyController extends Controller
 
         $property = Property::create([
             ...$request->all(),
-            'agent_id' => auth()->id(),
+            'owner_id' => auth()->id(),
             'views' => 0,
             'rating' => 0,
-            'reviews' => []
+            'reviews_count' => 0
         ]);
 
         return response()->json($property, 201);
@@ -100,7 +101,7 @@ class PropertyController extends Controller
         $property = Property::findOrFail($id);
 
         // Check if user is authorized to update this property
-        if ($property->agent_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($property->owner_id !== auth()->id() && !auth()->user()->is_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -112,8 +113,8 @@ class PropertyController extends Controller
             'bedrooms' => 'integer|min:0',
             'bathrooms' => 'integer|min:0',
             'area' => 'numeric|min:0',
-            'type' => 'string',
-            'status' => 'string',
+            'property_type' => 'string',
+            'status' => 'string|in:available,rented,sold',
             'images' => 'array',
             'features' => 'array',
             'is_featured' => 'boolean'
@@ -132,7 +133,7 @@ class PropertyController extends Controller
         $property = Property::findOrFail($id);
 
         // Check if user is authorized to delete this property
-        if ($property->agent_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($property->owner_id !== auth()->id() && !auth()->user()->is_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -143,9 +144,10 @@ class PropertyController extends Controller
     public function featured()
     {
         $properties = Property::where('is_featured', true)
-            ->with('agent')
+            ->where('status', 'available')
+            ->with('owner')
             ->take(6)
             ->get();
         return response()->json($properties);
     }
-} 
+}

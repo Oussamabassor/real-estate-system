@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Layout from '../components/Layout';
+import axios from 'axios';
 import {
     EnvelopeIcon,
     LockClosedIcon,
@@ -28,50 +29,52 @@ export default function Login() {
     };
 
     const handleSubmit = async (e) => {
-      e.preventDefault();
-      try {
-        setError(null);
-        setLoading(true);
+        e.preventDefault();
+        try {
+            setError(null);
+            setLoading(true);
 
-        const loginData = {
-          email: formData.email,
-          password: formData.password,
-          remember: rememberMe,
-        };
+            const loginData = {
+                email: formData.email,
+                password: formData.password,
+                remember: rememberMe,
+            };
 
-        console.log("Attempting login with:", loginData);
-        const res = await axios.post("http://127.0.0.1:8000/api/login", {
-          email: loginData.email,
-          password: loginData.password,
-          remember: loginData.remember,
-        });
-        
-        localStorage.setItem("token", res.data.token);
-        navigate("/");
-      } catch (err) {
-        console.error("Login error details:", {
-          response: err.response?.data,
-          status: err.response?.status,
-          message: err.response?.data?.message,
-        });
+            console.log("Attempting login with:", loginData);
+            
+            // Get CSRF cookie first
+            await axios.get('http://localhost:8000/sanctum/csrf-cookie', {
+                withCredentials: true
+            });
 
-        let errorMessage;
-        if (err.response?.data?.errors) {
-          errorMessage = Object.values(err.response.data.errors)
-            .flat()
-            .join("\n");
-        } else if (err.response?.data?.message) {
-          errorMessage = err.response.data.message;
-        } else if (err.response?.status === 401) {
-          errorMessage = "Invalid email or password";
-        } else {
-          errorMessage = "Login failed. Please try again.";
+            const response = await axios.post("http://localhost:8000/api/login", loginData, {
+                withCredentials: true,
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            console.log("Login response:", response.data);
+
+            if (response.data?.status === 'success' && response.data?.data?.token) {
+                localStorage.setItem('token', response.data.data.token);
+                navigate('/');
+            } else {
+                throw new Error(response.data?.message || 'Login failed');
+            }
+        } catch (err) {
+            if (err.response) {
+                console.error("Login error details:", err.response);
+                setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+            } else {
+                console.error("Login error:", err.message);
+                setError(err.message);
+            }
+        } finally {
+            setLoading(false);
         }
-
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
     };
 
     return (
@@ -238,4 +241,4 @@ export default function Login() {
             </div>
         </Layout>
     );
-} 
+}

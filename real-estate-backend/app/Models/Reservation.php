@@ -4,16 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
-    use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
-    class Reservation extends Model
-    {
-        use HasFactory;
-        use SoftDeletes;
+class Reservation extends Model
+{
+    use HasFactory;
+    use SoftDeletes;
 
-    // Remove the MongoDB connection
-    // protected $connection = 'mongodb';
-    protected $collection = 'reservations';
+    protected $table = 'reservations';
 
     protected $fillable = [
         'property_id',
@@ -27,9 +25,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     ];
 
     protected $casts = [
-        'check_in_date' => 'datetime',
-        'check_out_date' => 'datetime',
+        'check_in_date' => 'date',
+        'check_out_date' => 'date',
         'total_price' => 'decimal:2',
+        'guests' => 'integer',
     ];
 
     /**

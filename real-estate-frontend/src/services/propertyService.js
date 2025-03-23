@@ -24,12 +24,19 @@ class PropertyService extends BaseService {
      */
     async getAll(page = 1, perPage = 10) {
         try {
-            const response = await this.api.get('/properties', {
+            const response = await this.api.get(this.resourcePath, {
                 params: { page, per_page: perPage }
             });
-            return response.data;
+            return response;
         } catch (error) {
-            throw this.handleError(error);
+            if (!error.response) {
+                // Network error
+                throw new Error('Network error - Please check your connection and try again');
+            }
+            if (error.response.status === 404) {
+                throw new Error('Properties not found');
+            }
+            throw new Error(error.response?.data?.message || 'Failed to fetch properties');
         }
     }
 
@@ -54,7 +61,7 @@ class PropertyService extends BaseService {
      */
     async create(data) {
         try {
-            const response = await this.api.post('/properties', data);
+            const response = await this.api.post(this.resourcePath, data);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -123,7 +130,7 @@ class PropertyService extends BaseService {
     async getFeatured(limit = 6) {
         try {
             // First try to get all properties
-            const response = await this.api.get('/properties', {
+            const response = await this.api.get(this.resourcePath, {
                 params: { 
                     page: 1,
                     per_page: 100 // Get more properties to filter from
@@ -277,4 +284,4 @@ class PropertyService extends BaseService {
 }
 
 // Create a singleton instance
-export const propertyService = new PropertyService(); 
+export const propertyService = new PropertyService();

@@ -8,7 +8,7 @@ import { useState } from 'react';
 
 const DEFAULT_IMAGE = 'https://picsum.photos/600/400';
 
-const FeatureItem = ({ icon, value, label, iconType = "fontawesome" }) => (
+export const FeatureItem = ({ icon, value, label, iconType = "fontawesome" }) => (
     <motion.div
         whileHover={{ scale: 1.02, backgroundColor: "rgba(255, 255, 255, 1)" }}
         className="flex items-center justify-center bg-white/80 px-3 py-2 rounded-lg border border-purple-100 hover:border-purple-300 hover:shadow-sm transition-all duration-300"
@@ -16,11 +16,20 @@ const FeatureItem = ({ icon, value, label, iconType = "fontawesome" }) => (
         {iconType === "fontawesome" ? (
             <FontAwesomeIcon icon={icon} className="w-4 h-4 text-purple-500 transition-colors duration-300" />
         ) : (
-            <icon.type {...icon.props} className="w-4 h-4 text-purple-500 transition-colors duration-300" />
+            <div className="w-4 h-4 text-purple-500 transition-colors duration-300">
+                {icon}
+            </div>
         )}
         <span className="ml-2 text-sm font-medium text-gray-700">{value} {label}</span>
     </motion.div>
 );
+
+FeatureItem.propTypes = {
+    icon: PropTypes.oneOfType([PropTypes.object, PropTypes.func]).isRequired,
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    label: PropTypes.string.isRequired,
+    iconType: PropTypes.oneOf(['fontawesome', 'heroicon'])
+};
 
 export default function PropertyCard({ property }) {
     const {
@@ -181,7 +190,7 @@ export default function PropertyCard({ property }) {
                     <FeatureItem icon={faBath} value={bathrooms} label="Baths" />
                     <FeatureItem icon={faRuler} value={area} label="m²" />
                     {type === 'apartment' && floor && (
-                        <FeatureItem icon={HomeIcon} value={`Floor ${floor}`} label="" iconType="heroicon" />
+                        <FeatureItem icon={<HomeIcon />} value={`Floor ${floor}`} label="" iconType="heroicon" />
                     )}
                 </div>
 
@@ -214,13 +223,6 @@ export default function PropertyCard({ property }) {
     );
 }
 
-FeatureItem.propTypes = {
-    icon: PropTypes.oneOfType([PropTypes.object, PropTypes.func]).isRequired,
-    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    label: PropTypes.string.isRequired,
-    iconType: PropTypes.oneOf(['fontawesome', 'heroicon'])
-};
-
 PropertyCard.propTypes = {
     property: PropTypes.shape({
         id: PropTypes.number.isRequired,
@@ -236,4 +238,4 @@ PropertyCard.propTypes = {
         location: PropTypes.string,
         status: PropTypes.string,
     }).isRequired,
-}; 
+};

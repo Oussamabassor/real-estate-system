@@ -66,53 +66,38 @@ class UserController extends Controller
     public function favorites(Request $request)
     {
         $user = $request->user();
-        $favorites = $user->favorites;
-        return response()->json($favorites);
+        return response()->json($user->favorites()->with('owner')->get());
     }
 
-    public function addFavorite(Request $request)
+    public function addFavorite(Request $request, $propertyId)
     {
-        $validator = Validator::make($request->all(), [
-            'property_id' => 'required|exists:properties,_id'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
         $user = $request->user();
-        $favorites = $user->favorites ?? [];
 
-        if (!in_array($request->property_id, $favorites)) {
-            $favorites[] = $request->property_id;
-            $user->update(['favorites' => $favorites]);
+        if (!$user->favorites()->where('property_id', $propertyId)->exists()) {
+            $user->favorites()->attach($propertyId);
+            return response()->json([
+                'message' => 'Property added to favorites'
+            ]);
         }
 
         return response()->json([
-            'message' => 'Property added to favorites',
-            'favorites' => $favorites
-        ]);
+            'message' => 'Property is already in favorites'
+        ], 422);
     }
 
-    public function removeFavorite(Request $request)
+    public function removeFavorite(Request $request, $propertyId)
     {
-        $validator = Validator::make($request->all(), [
-            'property_id' => 'required|exists:properties,_id'
-        ]);
+        $user = $request->user();
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+        if ($user->favorites()->where('property_id', $propertyId)->exists()) {
+            $user->favorites()->detach($propertyId);
+            return response()->json([
+                'message' => 'Property removed from favorites'
+            ]);
         }
 
-        $user = $request->user();
-        $favorites = $user->favorites ?? [];
-
-        $favorites = array_diff($favorites, [$request->property_id]);
-        $user->update(['favorites' => array_values($favorites)]);
-
         return response()->json([
-            'message' => 'Property removed from favorites',
-            'favorites' => $favorites
-        ]);
+            'message' => 'Property is not in favorites'
+        ], 422);
     }
-} 
+}

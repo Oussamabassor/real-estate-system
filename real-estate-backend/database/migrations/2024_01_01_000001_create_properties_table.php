@@ -14,35 +14,25 @@ return new class extends Migration
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->text('description')->nullable();
-            $table->string('property_type');
+            $table->text('description');
+            $table->decimal('price', 12, 2);
             $table->string('address');
-            $table->string('status');
-            $table->decimal('price', 10, 2);
             $table->string('city');
             $table->string('state');
-            $table->unsignedBigInteger('owner_id');
-            $table->string('zip_code');
+            $table->string('zip_code', 20);
             $table->integer('bedrooms');
             $table->integer('bathrooms');
-            $table->integer('area');
+            $table->decimal('area', 10, 2);
+            $table->string('property_type');
+            $table->string('status')->default('available');
             $table->json('features')->nullable();
             $table->json('images')->nullable();
+            $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');
             $table->boolean('is_featured')->default(false);
-            $table->decimal('rating', 3, 2)->nullable();
+            $table->decimal('rating', 3, 1)->default(0);
             $table->integer('reviews_count')->default(0);
-            $table->softDeletes();
             $table->timestamps();
-
-            $table->index('title');
-            $table->index('property_type');
-            $table->index('status');
-            $table->index('price');
-            $table->index('city');
-            $table->index('state');
-            $table->index('owner_id');
-            $table->index('is_featured');
-            $table->index('rating');
+            $table->softDeletes();
         });
     }
 

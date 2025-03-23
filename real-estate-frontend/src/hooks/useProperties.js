@@ -7,16 +7,27 @@ export function useProperties(page = 1, perPage = 12) {
   return useQuery({
     queryKey: ['properties', page, perPage],
     queryFn: async () => {
-      const { data } = await propertyService.getAll(page, perPage);
-      return {
-        properties: data.data || [],
-        total: data.total || 0,
-        currentPage: data.current_page || 1,
-        lastPage: data.last_page || 1
-      };
+      try {
+        const response = await propertyService.getAll(page, perPage);
+        const { data, current_page, last_page, total } = response.data || {};
+        
+        return {
+          properties: data || [],
+          total: total || 0,
+          currentPage: current_page || 1,
+          lastPage: last_page || 1
+        };
+      } catch (error) {
+        // Transform the error to be more user-friendly
+        const message = error.response?.data?.message 
+          || error.message 
+          || 'Failed to fetch properties';
+        throw new Error(message);
+      }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 30, // 30 minutes
+    cacheTime: 1000 * 60 * 30, // 30 minutes,
+    retry: 1
   });
 }
 
@@ -95,4 +106,4 @@ export function useDeleteProperty() {
       queryClient.invalidateQueries(queryKeys.properties.all);
     },
   });
-} 
+}

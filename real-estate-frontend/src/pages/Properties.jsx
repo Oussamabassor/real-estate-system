@@ -158,17 +158,30 @@ export default function Properties() {
 
   if (isLoading) {
     return (
-      <AnimatePresence mode="wait">
-        <LoadingSpinner key="loading" />
-      </AnimatePresence>
+      <Layout>
+        <div className="min-h-screen bg-gray-50">
+          <LoadingSpinner />
+        </div>
+      </Layout>
     );
   }
 
   if (error) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
-          <div className="text-red-500">{error}</div>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+            <XMarkIcon className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Properties</h2>
+            <p className="text-gray-600 mb-6">{error.message}</p>
+            <button
+              onClick={() => refetch()}
+              className="inline-flex items-center justify-center px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-purple-200 hover:shadow-xl gap-2"
+            >
+              <ArrowPathIcon className="w-5 h-5" />
+              Try Again
+            </button>
+          </div>
         </div>
       </Layout>
     );

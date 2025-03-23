@@ -10,9 +10,7 @@ class Property extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Remove the MongoDB connection
-    // protected $connection = 'mongodb';
-    protected $collection = 'properties';
+    protected $table = 'properties';
 
     protected $fillable = [
         'title',
@@ -153,74 +151,9 @@ class Property extends Model
             ->where('status', '!=', 'cancelled');
 
         if ($excludeReservationId) {
-            $query->where('_id', '!=', $excludeReservationId);
+            $query->where('id', '!=', $excludeReservationId);
         }
 
         return !$query->exists();
-    }
-
-    /**
-     * Calculate the total price for a given date range.
-     */
-    public function calculateTotalPrice($checkIn, $checkOut)
-    {
-        $nights = $checkIn->diffInDays($checkOut);
-        return $this->price * $nights;
-    }
-
-    /**
-     * Get the average rating of the property.
-     */
-    public function getAverageRatingAttribute()
-    {
-        return $this->reviews()->avg('rating') ?? 0;
-    }
-
-    /**
-     * Get the number of reviews for the property.
-     */
-    public function getReviewsCountAttribute()
-    {
-        return $this->reviews()->count();
-    }
-
-    /**
-     * Check if a user has favorited the property.
-     */
-    public function isFavoritedBy($userId)
-    {
-        return $this->favoritedBy()->where('user_id', $userId)->exists();
-    }
-
-    /**
-     * Get the full address of the property.
-     */
-    public function getFullAddressAttribute()
-    {
-        return "{$this->address}, {$this->city}, {$this->state} {$this->zip_code}";
-    }
-
-    /**
-     * Get the price per square foot.
-     */
-    public function getPricePerSquareFootAttribute()
-    {
-        return $this->area > 0 ? $this->price / $this->area : 0;
-    }
-
-    /**
-     * Get the main image of the property.
-     */
-    public function getMainImageAttribute()
-    {
-        return $this->images[0] ?? null;
-    }
-
-    /**
-     * Get the thumbnail images of the property.
-     */
-    public function getThumbnailsAttribute()
-    {
-        return array_slice($this->images, 1) ?? [];
     }
 }

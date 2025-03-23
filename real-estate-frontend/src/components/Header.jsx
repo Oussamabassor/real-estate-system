@@ -18,7 +18,7 @@ export default function Header() {
     const [showSearch, setShowSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const location = useLocation();
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -28,23 +28,33 @@ export default function Header() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Public routes available to all users
     const publicNavItems = [
-      { name: "Home", path: "/" },
-      { name: "Properties", path: "/properties" },
+        { name: "Home", path: "/" },
+        { name: "Properties", path: "/properties" },
         { name: "Contact", path: "/contact" },
+    ];
+
+    // Routes for authenticated users
+    const userNavItems = [
+        { name: "My Reservations", path: "/reservations" },
+    ];
+
+    // Admin-only routes
+    const adminNavItems = [
         { name: "Dashboard", path: "/dashboard" },
     ];
 
-    const privateNavItems = [
-        { name: 'Reservations', path: '/reservations' },
-        { name: 'Profile', path: '/profile' },
+    // Combine the appropriate navigation items based on user role
+    const navItems = [
+        ...publicNavItems,
+        ...(user ? userNavItems : []),
+        ...(isAdmin ? adminNavItems : [])
     ];
 
-    const navItems = [...publicNavItems, ...(user ? privateNavItems : [])];
-
+    // Rest of the component code...
     const handleSearch = (e) => {
         e.preventDefault();
-        // Implement search functionality
         console.log('Search query:', searchQuery);
         setShowSearch(false);
     };
@@ -92,27 +102,33 @@ export default function Header() {
                             <MagnifyingGlassIcon className="w-5 h-5" />
                         </button>
 
-                        {/* Favorites */}
-                        <button
-                            className={`p-2 rounded-full transition-all duration-200 ${isScrolled
-                                ? 'hover:bg-purple-50 text-gray-600 hover:text-purple-600'
-                                : 'hover:bg-white/10 text-white/90 hover:text-white'
-                                }`}
-                        >
-                            <HeartIcon className="w-5 h-5" />
-                        </button>
+                        {/* Show these buttons only for authenticated users */}
+                        {user && (
+                            <>
+                                {/* Favorites */}
+                                <Link
+                                    to="/profile"
+                                    className={`p-2 rounded-full transition-all duration-200 ${isScrolled
+                                        ? 'hover:bg-purple-50 text-gray-600 hover:text-purple-600'
+                                        : 'hover:bg-white/10 text-white/90 hover:text-white'
+                                        }`}
+                                >
+                                    <HeartIcon className="w-5 h-5" />
+                                </Link>
 
-                        {/* Notifications */}
-                        <button
-                            className={`p-2 rounded-full transition-all duration-200 ${isScrolled
-                                ? 'hover:bg-purple-50 text-gray-600 hover:text-purple-600'
-                                : 'hover:bg-white/10 text-white/90 hover:text-white'
-                                }`}
-                        >
-                            <BellIcon className="w-5 h-5" />
-                        </button>
+                                {/* Notifications */}
+                                <button
+                                    className={`p-2 rounded-full transition-all duration-200 ${isScrolled
+                                        ? 'hover:bg-purple-50 text-gray-600 hover:text-purple-600'
+                                        : 'hover:bg-white/10 text-white/90 hover:text-white'
+                                        }`}
+                                >
+                                    <BellIcon className="w-5 h-5" />
+                                </button>
+                            </>
+                        )}
 
-                        {/* Sign In Button */}
+                        {/* Profile/Sign In Button */}
                         {!user ? (
                             <Link
                                 to="/login"
@@ -132,7 +148,7 @@ export default function Header() {
                                     }`}
                             >
                                 <UserIcon className="w-5 h-5" />
-                                Profile
+                                {user.name}
                             </Link>
                         )}
                     </div>
@@ -191,19 +207,7 @@ export default function Header() {
                             className="mt-4 md:hidden"
                         >
                             <div className="p-4 space-y-4 shadow-lg rounded-2xl bg-white/90 backdrop-blur-lg">
-                                {/* Mobile Search */}
-                                <div className="px-4">
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            placeholder="Search..."
-                                            className="w-full px-4 py-2 pl-10 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        />
-                                        <MagnifyingGlassIcon className="absolute w-5 h-5 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
-                                    </div>
-                                </div>
-
-                                {/* Navigation Links */}
+                                {/* Mobile Navigation */}
                                 {navItems.map((item) => (
                                     <Link
                                         key={item.name}
@@ -217,22 +221,29 @@ export default function Header() {
                                 ))}
 
                                 {/* Mobile Actions */}
-                                <div className="grid grid-cols-2 gap-4 px-4 pt-4 border-t border-gray-100">
-                                    <button className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 rounded-lg hover:bg-purple-50 hover:text-purple-600">
-                                        <HeartIcon className="w-5 h-5" />
-                                        Favorites
-                                    </button>
-                                    <button className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 rounded-lg hover:bg-purple-50 hover:text-purple-600">
-                                        <BellIcon className="w-5 h-5" />
-                                        Notifications
-                                    </button>
-                                </div>
+                                {user && (
+                                    <div className="grid grid-cols-2 gap-4 px-4 pt-4 border-t border-gray-100">
+                                        <Link 
+                                            to="/profile" 
+                                            className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 rounded-lg hover:bg-purple-50 hover:text-purple-600"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                        >
+                                            <HeartIcon className="w-5 h-5" />
+                                            Favorites
+                                        </Link>
+                                        <button className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 rounded-lg hover:bg-purple-50 hover:text-purple-600">
+                                            <BellIcon className="w-5 h-5" />
+                                            Notifications
+                                        </button>
+                                    </div>
+                                )}
 
-                                {/* Sign In Button */}
+                                {/* Sign In Button for Mobile */}
                                 {!user ? (
                                     <Link
                                         to="/login"
                                         className={`w-full px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 shadow-lg shadow-purple-200/50`}
+                                        onClick={() => setIsMobileMenuOpen(false)}
                                     >
                                         Sign In
                                     </Link>
@@ -240,9 +251,12 @@ export default function Header() {
                                     <Link
                                         to="/profile"
                                         className={`w-full px-4 py-2.5 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors duration-200 shadow-lg shadow-purple-200/50`}
+                                        onClick={() => setIsMobileMenuOpen(false)}
                                     >
-                                        <UserIcon className="w-5 h-5" />
-                                        Profile
+                                        <span className="flex items-center justify-center gap-2">
+                                            <UserIcon className="w-5 h-5" />
+                                            {user.name}
+                                        </span>
                                     </Link>
                                 )}
                             </div>
@@ -252,4 +266,4 @@ export default function Header() {
             </div>
         </header>
     );
-} 
+}
