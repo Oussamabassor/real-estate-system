@@ -28,49 +28,50 @@ export default function Login() {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            setError(null);
-            setLoading(true);
+      e.preventDefault();
+      try {
+        setError(null);
+        setLoading(true);
 
-            // Format the login data
-            const loginData = {
-                email: formData.email,
-                password: formData.password,
-                remember: rememberMe
-            };
+        const loginData = {
+          email: formData.email,
+          password: formData.password,
+          remember: rememberMe,
+        };
 
-            console.log('Attempting login with:', loginData);
-            await login(loginData);
-            navigate('/');
-        } catch (err) {
-            console.error('Login error details:', {
-                response: err.response?.data,
-                error: err.response?.data?.error,
-                message: err.response?.data?.message,
-                errors: err.response?.data?.errors,
-                status: err.response?.status,
-                statusText: err.response?.statusText
-            });
+        console.log("Attempting login with:", loginData);
+        const res = await axios.post("http://127.0.0.1:8000/api/login", {
+          email: loginData.email,
+          password: loginData.password,
+          remember: loginData.remember,
+        });
+        
+        localStorage.setItem("token", res.data.token);
+        navigate("/");
+      } catch (err) {
+        console.error("Login error details:", {
+          response: err.response?.data,
+          status: err.response?.status,
+          message: err.response?.data?.message,
+        });
 
-            // Get a more detailed error message
-            let errorMessage;
-            if (err.response?.data?.errors) {
-                errorMessage = Object.values(err.response.data.errors).flat().join('\n');
-            } else if (err.response?.data?.message) {
-                errorMessage = err.response.data.message;
-            } else if (err.response?.data?.error) {
-                errorMessage = err.response.data.error;
-            } else if (err.response?.status === 401) {
-                errorMessage = 'Invalid email or password';
-            } else {
-                errorMessage = 'Login failed. Please try again.';
-            }
-
-            setError(errorMessage);
-        } finally {
-            setLoading(false);
+        let errorMessage;
+        if (err.response?.data?.errors) {
+          errorMessage = Object.values(err.response.data.errors)
+            .flat()
+            .join("\n");
+        } else if (err.response?.data?.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.response?.status === 401) {
+          errorMessage = "Invalid email or password";
+        } else {
+          errorMessage = "Login failed. Please try again.";
         }
+
+        setError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
     };
 
     return (
@@ -96,7 +97,7 @@ export default function Login() {
                     <div className="mt-10">
                         <div className="overflow-hidden bg-white shadow-xl rounded-2xl shadow-gray-200/50">
                             <div className="p-8">
-                                <form className="space-y-6" onSubmit={handleSubmit}>
+                                <form className="space-y-6" onSubmit={handleSubmit} method='post'>
                                     {error && (
                                         <div className="p-4 border border-red-100 rounded-xl bg-red-50/50 animate-fade-in">
                                             <div className="flex">

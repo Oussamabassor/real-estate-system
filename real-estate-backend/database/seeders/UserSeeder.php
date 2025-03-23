@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'password123',
+            'password' => Hash::make('password123'),
             'phone' => '1234567890',
             'address' => '123 Test St',
             'city' => 'Test City',
@@ -24,4 +24,4 @@ class UserSeeder extends Seeder
             'role' => 'admin',
         ]);
     }
-} 
+}

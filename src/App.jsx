@@ -10,12 +10,14 @@ import { LanguageProvider } from "./context/LanguageContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
+import Dashboard from "./components/Dashboard";
 import Properties from "./pages/Properties";
 import PropertyDetails from "./pages/PropertyDetails";
 import Reservations from "./pages/Reservations";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import { Toaster } from "react-hot-toast";
 import LoadingScreen from "./components/LoadingScreen";
@@ -98,7 +100,9 @@ function App() {
                   <Route path="/properties" element={<Properties />} />
                   <Route path="/properties/:id" element={<PropertyDetails />} />
                   <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
 
                   {/* Protected Routes */}
                   <Route
@@ -116,7 +120,7 @@ function App() {
                         <Profile />
                       </ProtectedRoute>
                     }
-                  />
+                    />
 
                   {/* 404 Route */}
                   <Route path="*" element={<NotFound />} />

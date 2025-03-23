@@ -29,8 +29,10 @@ export default function Header() {
     }, []);
 
     const publicNavItems = [
-        { name: 'Home', path: '/' },
-        { name: 'Properties', path: '/properties' },
+      { name: "Home", path: "/" },
+      { name: "Properties", path: "/properties" },
+        { name: "Contact", path: "/contact" },
+        { name: "Dashboard", path: "/dashboard" },
     ];
 
     const privateNavItems = [
@@ -54,13 +56,13 @@ export default function Header() {
                 : 'bg-transparent py-6'
                 }`}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <nav className="flex items-center justify-between">
                     {/* Logo */}
                     <Logo variant={isScrolled ? 'dark' : 'light'} />
 
                     {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center space-x-6">
+                    <div className="items-center hidden space-x-6 md:flex">
                         {navItems.map((item) => (
                             <Link
                                 key={item.name}
@@ -78,7 +80,7 @@ export default function Header() {
                     </div>
 
                     {/* Desktop Actions */}
-                    <div className="hidden md:flex items-center space-x-4">
+                    <div className="items-center hidden space-x-4 md:flex">
                         {/* Search Button */}
                         <button
                             onClick={() => setShowSearch(!showSearch)}
@@ -138,7 +140,7 @@ export default function Header() {
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="md:hidden p-2 rounded-lg"
+                        className="p-2 rounded-lg md:hidden"
                     >
                         {isMobileMenuOpen ? (
                             <XMarkIcon className={`w-6 h-6 ${isScrolled ? 'text-gray-900' : 'text-white'}`} />
@@ -156,7 +158,7 @@ export default function Header() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-full left-0 right-0 mt-4 px-4"
+                            className="absolute left-0 right-0 px-4 mt-4 top-full"
                         >
                             <form onSubmit={handleSearch} className="max-w-3xl mx-auto">
                                 <div className="relative">
@@ -165,11 +167,11 @@ export default function Header() {
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         placeholder="Search properties, locations..."
-                                        className="w-full px-6 py-4 bg-white rounded-xl shadow-lg border border-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 pr-12"
+                                        className="w-full px-6 py-4 pr-12 bg-white border border-gray-100 shadow-lg rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
                                     />
                                     <button
                                         type="submit"
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-purple-600 transition-colors"
+                                        className="absolute p-2 text-gray-400 transition-colors -translate-y-1/2 right-2 top-1/2 hover:text-purple-600"
                                     >
                                         <MagnifyingGlassIcon className="w-6 h-6" />
                                     </button>
@@ -186,18 +188,18 @@ export default function Header() {
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="md:hidden mt-4"
+                            className="mt-4 md:hidden"
                         >
-                            <div className="rounded-2xl bg-white/90 backdrop-blur-lg shadow-lg p-4 space-y-4">
+                            <div className="p-4 space-y-4 shadow-lg rounded-2xl bg-white/90 backdrop-blur-lg">
                                 {/* Mobile Search */}
                                 <div className="px-4">
                                     <div className="relative">
                                         <input
                                             type="text"
                                             placeholder="Search..."
-                                            className="w-full px-4 py-2 pl-10 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            className="w-full px-4 py-2 pl-10 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                         />
-                                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                        <MagnifyingGlassIcon className="absolute w-5 h-5 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
                                     </div>
                                 </div>
 
@@ -216,11 +218,11 @@ export default function Header() {
 
                                 {/* Mobile Actions */}
                                 <div className="grid grid-cols-2 gap-4 px-4 pt-4 border-t border-gray-100">
-                                    <button className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-600">
+                                    <button className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 rounded-lg hover:bg-purple-50 hover:text-purple-600">
                                         <HeartIcon className="w-5 h-5" />
                                         Favorites
                                     </button>
-                                    <button className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-600">
+                                    <button className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 rounded-lg hover:bg-purple-50 hover:text-purple-600">
                                         <BellIcon className="w-5 h-5" />
                                         Notifications
                                     </button>

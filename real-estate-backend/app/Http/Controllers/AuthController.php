@@ -205,7 +205,7 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $request->email)->first();
-        $user->password = Hash::make($request->password);
+        $user->password = bcrypt($request->password);
         $user->save();
 
         return response()->json([
@@ -213,4 +213,4 @@ class AuthController extends Controller
             'message' => 'Password reset successfully'
         ]);
     }
-} 
+}

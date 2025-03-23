@@ -25,7 +25,7 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => fake()->optional(0.8)->dateTime(), // 80% chance of being verified
-            'password' => Hash::make('password'),
+            'password' => bcrypt('password'),
             'phone' => fake()->optional(0.7)->phoneNumber(),
             'address' => fake()->optional(0.7)->streetAddress(),
             'city' => fake()->optional(0.7)->city(),

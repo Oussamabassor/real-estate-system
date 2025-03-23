@@ -21,8 +21,8 @@ use App\Http\Controllers\Api\StatsController;
 */
 
 // Public routes
-Route::post('/register', [App\Http\Controllers\Api\AuthController::class, 'register']);
-Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
 
 // Properties routes (public)
 Route::get('/properties', [PropertyController::class, 'index']);

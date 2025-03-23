@@ -96,7 +96,7 @@ class UserController extends Controller
             ], 422);
         }
 
-        $user->password = Hash::make($request->password);
+        $user->password = bcrypt($request->password);
         $user->save();
 
         return response()->json([
@@ -237,4 +237,4 @@ class UserController extends Controller
             ]
         ]);
     }
-} 
+}
