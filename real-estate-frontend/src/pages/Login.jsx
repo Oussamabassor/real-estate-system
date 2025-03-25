@@ -1,244 +1,208 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import Layout from '../components/Layout';
-import axios from 'axios';
-import {
-    EnvelopeIcon,
-    LockClosedIcon,
-    ExclamationCircleIcon,
-    ArrowRightIcon,
-    BuildingOfficeIcon
-} from '@heroicons/react/24/outline';
+import { LockClosedIcon } from '@heroicons/react/24/outline';
 
 export default function Login() {
-    const navigate = useNavigate();
-    const { login } = useAuth();
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-    });
-    const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get redirect path from location state or default to home
+  const from = location.state?.from?.pathname || '/';
+  
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-        setError(null);
-    };
+  // Debug information
+  console.log('Login page rendered');
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            setError(null);
-            setLoading(true);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    // Clear login error when user makes any change
+    if (loginError) {
+      setLoginError('');
+    }
+  };
 
-            const loginData = {
-                email: formData.email,
-                password: formData.password,
-                remember: rememberMe,
-            };
+  const validate = () => {
+    const newErrors = {};
+    
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-            console.log("Attempting login with:", loginData);
-            
-            // Get CSRF cookie first
-            await axios.get('http://localhost:8000/sanctum/csrf-cookie', {
-                withCredentials: true
-            });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validate()) return;
+    
+    setIsSubmitting(true);
+    setLoginError('');
+    
+    try {
+      console.log('Attempting login with:', { email: formData.email });
+      const result = await login(formData);
+      
+      if (result.success) {
+        console.log('Login successful, redirecting to:', from);
+        navigate(from, { replace: true });
+      } else {
+        setLoginError(result.error || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setLoginError(error.message || 'Login failed');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-            const response = await axios.post("http://localhost:8000/api/login", loginData, {
-                withCredentials: true,
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
+  return (
+    <Layout>
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          {/* Removed problematic image */}
+          <h1 className="text-center text-2xl font-bold text-purple-600">LuxeStay</h1>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign in to your account
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Or{' '}
+            <Link to="/register" className="font-medium text-purple-600 hover:text-purple-500">
+              Sign up
+            </Link>
+          </p>
+        </div>
 
-            console.log("Login response:", response.data);
-
-            if (response.data?.status === 'success' && response.data?.data?.token) {
-                localStorage.setItem('token', response.data.data.token);
-                navigate('/');
-            } else {
-                throw new Error(response.data?.message || 'Login failed');
-            }
-        } catch (err) {
-            if (err.response) {
-                console.error("Login error details:", err.response);
-                setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
-            } else {
-                console.error("Login error:", err.message);
-                setError(err.message);
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <Layout>
-            <div className="min-h-[calc(100vh-4rem)] px-4 py-12 mt-2 bg-gradient-to-br from-primary-50/50 via-white to-secondary-50/50 sm:px-6 lg:px-8">
-                <div className="max-w-md mx-auto">
-                    <div className="text-center animate-fade-in">
-                        <div className="flex items-center justify-center w-20 h-20 mx-auto shadow-xl rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-primary-500/20">
-                            <BuildingOfficeIcon className="w-10 h-10 text-white" />
-                        </div>
-                        <h2 className="mt-8 text-3xl font-bold tracking-tight text-gray-900">
-                            Welcome Back
-                        </h2>
-                        <p className="mt-3 text-base text-gray-600">
-                            Don't have an account?{' '}
-                            <Link to="/register" className="inline-flex items-center gap-1 font-medium transition-colors text-primary-600 hover:text-primary-500">
-                                Create one now
-                                <ArrowRightIcon className="w-4 h-4" />
-                            </Link>
-                        </p>
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {loginError && (
+                <div className="rounded-md bg-red-50 p-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <LockClosedIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
                     </div>
-
-                    <div className="mt-10">
-                        <div className="overflow-hidden bg-white shadow-xl rounded-2xl shadow-gray-200/50">
-                            <div className="p-8">
-                                <form className="space-y-6" onSubmit={handleSubmit} method='post'>
-                                    {error && (
-                                        <div className="p-4 border border-red-100 rounded-xl bg-red-50/50 animate-fade-in">
-                                            <div className="flex">
-                                                <div className="flex-shrink-0">
-                                                    <ExclamationCircleIcon className="w-5 h-5 text-red-400" />
-                                                </div>
-                                                <div className="ml-3">
-                                                    <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="space-y-5">
-                                        <div>
-                                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                                Email address
-                                            </label>
-                                            <div className="relative mt-1 group">
-                                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                                    <EnvelopeIcon className="w-5 h-5 text-gray-400 transition-colors group-focus-within:text-primary-500" />
-                                                </div>
-                                                <input
-                                                    id="email"
-                                                    name="email"
-                                                    type="email"
-                                                    autoComplete="email"
-                                                    required
-                                                    value={formData.email}
-                                                    onChange={handleChange}
-                                                    className="block w-full pl-10 transition-all border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-                                                    placeholder="john@example.com"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                                                Password
-                                            </label>
-                                            <div className="relative mt-1 group">
-                                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                                    <LockClosedIcon className="w-5 h-5 text-gray-400 transition-colors group-focus-within:text-primary-500" />
-                                                </div>
-                                                <input
-                                                    id="password"
-                                                    name="password"
-                                                    type="password"
-                                                    autoComplete="current-password"
-                                                    required
-                                                    value={formData.password}
-                                                    onChange={handleChange}
-                                                    className="block w-full pl-10 transition-all border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-                                                    placeholder="••••••••"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center">
-                                            <input
-                                                id="remember-me"
-                                                name="remember-me"
-                                                type="checkbox"
-                                                checked={rememberMe}
-                                                onChange={(e) => setRememberMe(e.target.checked)}
-                                                className="w-4 h-4 border-gray-300 rounded text-primary-600 focus:ring-primary-500/20"
-                                            />
-                                            <label htmlFor="remember-me" className="block ml-2 text-sm text-gray-700">
-                                                Remember me
-                                            </label>
-                                        </div>
-
-                                        <div className="text-sm">
-                                            <Link to="/forgot-password" className="font-medium transition-colors text-primary-600 hover:text-primary-500">
-                                                Forgot password?
-                                            </Link>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <button
-                                            type="submit"
-                                            disabled={loading}
-                                            className="flex items-center justify-center w-full gap-2 px-8 py-3 text-base font-medium text-white transition-all shadow-lg bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-primary-500/25"
-                                        >
-                                            {loading ? (
-                                                <div className="w-5 h-5 loading-spinner" />
-                                            ) : (
-                                                <>
-                                                    Sign in
-                                                    <ArrowRightIcon className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                </form>
-
-                                <div className="mt-8">
-                                    <div className="relative">
-                                        <div className="absolute inset-0 flex items-center">
-                                            <div className="w-full border-t border-gray-200" />
-                                        </div>
-                                        <div className="relative flex justify-center text-sm">
-                                            <span className="px-4 text-gray-500 bg-white">
-                                                Or continue with
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4 mt-6">
-                                        <button
-                                            type="button"
-                                            className="flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all"
-                                        >
-                                            <svg className="w-5 h-5 mr-2 text-[#4285F4]" viewBox="0 0 24 24">
-                                                <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" fill="currentColor" />
-                                            </svg>
-                                            Google
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all"
-                                        >
-                                            <svg className="w-5 h-5 mr-2 text-[#1DA1F2]" viewBox="0 0 24 24">
-                                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" fill="currentColor" />
-                                            </svg>
-                                            Twitter
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-red-800">{loginError}</h3>
                     </div>
+                  </div>
                 </div>
-            </div>
-        </Layout>
-    );
+              )}
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email address
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`appearance-none block w-full px-3 py-2 border ${
+                      errors.email ? 'border-red-300' : 'border-gray-300'
+                    } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm`}
+                  />
+                  {errors.email && (
+                    <p className="mt-2 text-sm text-red-600">{errors.email}</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`appearance-none block w-full px-3 py-2 border ${
+                      errors.password ? 'border-red-300' : 'border-gray-300'
+                    } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm`}
+                  />
+                  {errors.password && (
+                    <p className="mt-2 text-sm text-red-600">{errors.password}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                    Remember me
+                  </label>
+                </div>
+
+                <div className="text-sm">
+                  <Link to="/forgot-password" className="font-medium text-purple-600 hover:text-purple-500">
+                    Forgot password?
+                  </Link>
+                </div>
+              </div>
+
+              <div>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Loading...
+                    </span>
+                  ) : (
+                    'Sign in'
+                  )}
+                </motion.button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
 }

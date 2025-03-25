@@ -27,6 +27,7 @@ import CTASection from '../components/CTASection';
 import PropertyGrid from '../components/PropertyGrid';
 import { useFeaturedProperties } from '../hooks/useProperties';
 import { PageTransition, FadeIn, SlideIn, StaggerChildren, StaggerItem } from '../components/PageAnimations';
+import Header from '../components/Header';
 
 const statsData = [
     { icon: HomeIcon, label: 'Properties', value: '1,000+' },
@@ -93,9 +94,14 @@ export default function Home() {
     const heroRef = useRef(null);
     const { scrollY } = useScroll();
     const opacity = useTransform(scrollY, [0, 300], [1, 0]);
-    const y = useTransform(scrollY, [0, 300], [0, 100]);
-
+    
+    // Debug mode
+    const DEBUG_MODE = true;
+    
     useEffect(() => {
+        if (DEBUG_MODE) {
+            console.log('🏠 Home component mounted');
+        }
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 50);
         };
@@ -201,11 +207,21 @@ export default function Home() {
 
     const displayedProperties = filteredProperties.slice(0, 6);
 
+    // Render a fallback UI if things are loading or there are errors
     if (propertiesLoading || statsLoading) {
+        if (DEBUG_MODE) console.log('⏳ Rendering loading screen');
         return <LoadingScreen />;
     }
 
+    // Improved error handling with debug info
     if (propertiesError || statsError) {
+        if (DEBUG_MODE) {
+            console.error('🔴 Errors detected:', { 
+                propertiesError, 
+                statsError 
+            });
+        }
+        
         return (
             <Layout>
                 <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center bg-gray-50 px-4">
@@ -225,6 +241,13 @@ export default function Home() {
                                         <p>{statsError}</p>
                                     </div>
                                 )}
+                                
+                                {DEBUG_MODE && (
+                                    <div className="mt-4 p-4 bg-gray-100 rounded text-left text-xs overflow-auto max-h-40">
+                                        <p className="font-semibold">Debug Information:</p>
+                                        <pre>{JSON.stringify({ propertiesError, statsError }, null, 2)}</pre>
+                                    </div>
+                                )}
                             </div>
                             <button
                                 onClick={() => window.location.reload()}
@@ -239,14 +262,15 @@ export default function Home() {
         );
     }
 
-    return (
+    // Render the main content
+    const HomeContent = () => (
         <AnimatePresence mode="wait">
             <PageTransition key="home">
                 <div className="min-h-screen bg-gray-50">
                     {/* Enhanced Hero Section with CTA */}
-                    <div className="relative min-h-screen">
+                    <div className="relative min-h-screen pt-16"> {/* Added padding-top for header space */}
                         {/* Background Video/Image */}
-                        <div className="absolute inset-0">
+                        <div className="absolute inset-0 top-16"> {/* Top offset for header */}
                             <div
                                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                                 style={{
@@ -257,7 +281,7 @@ export default function Home() {
                         </div>
 
                         {/* Hero Content */}
-                        <div className="relative min-h-screen flex items-center">
+                        <div className="relative min-h-[calc(100vh-4rem)] flex items-center"> {/* Adjusted height */}
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                                     {/* Left Column - Main Content */}
@@ -487,7 +511,7 @@ export default function Home() {
                                             Subscribe to our newsletter for exclusive property updates and market insights.
                                         </p>
                                     </div>
-                                    <div>
+                                    <div className="flex gap-4">
                                         <form className="flex gap-4">
                                             <input
                                                 type="email"
@@ -510,6 +534,13 @@ export default function Home() {
             </PageTransition>
         </AnimatePresence>
     );
+
+    // Return the Layout with HomeContent
+    return (
+        <Layout>
+            <HomeContent />
+        </Layout>
+    );
 }
 
 Home.propTypes = {
@@ -525,4 +556,4 @@ Home.propTypes = {
         images: PropTypes.arrayOf(PropTypes.string).isRequired,
         floor: PropTypes.number,
     })),
-}; 
+};

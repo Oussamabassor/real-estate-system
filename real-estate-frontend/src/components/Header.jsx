@@ -1,269 +1,282 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import {
-    UserIcon,
+    HomeIcon,
+    BuildingOfficeIcon,
+    CalendarIcon,
+    UserCircleIcon,
     Bars3Icon,
     XMarkIcon,
-    MagnifyingGlassIcon,
-    BellIcon,
-    HeartIcon
 } from '@heroicons/react/24/outline';
-import Logo from './Logo';
 
-export default function Header() {
-    const [isScrolled, setIsScrolled] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [showSearch, setShowSearch] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
+export default function Header({ isScrolled }) {
     const location = useLocation();
-    const { user, isAdmin } = useAuth();
-
+    const navigate = useNavigate();
+    const { user, isAuthenticated, logout, initialized } = useAuth();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  
+    // Debug information
+    console.log('Header component rendered', { isAuthenticated, user, initialized });
+  
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+        // Log authentication state on every render
+        console.log('Authentication state in Header:', { 
+            isAuthenticated, 
+            user: user ? `${user.name} (${user.email})` : 'No user',
+            initialized
+        });
+    }, [isAuthenticated, user, initialized]);
 
-    // Public routes available to all users
-    const publicNavItems = [
-        { name: "Home", path: "/" },
-        { name: "Properties", path: "/properties" },
-        { name: "Contact", path: "/contact" },
-    ];
+    // Reset menu state on route change
+    useEffect(() => {
+        setIsMenuOpen(false);
+        setIsProfileMenuOpen(false);
+    }, [location.pathname]);
 
-    // Routes for authenticated users
-    const userNavItems = [
-        { name: "My Reservations", path: "/reservations" },
-    ];
-
-    // Admin-only routes
-    const adminNavItems = [
-        { name: "Dashboard", path: "/dashboard" },
-    ];
-
-    // Combine the appropriate navigation items based on user role
-    const navItems = [
-        ...publicNavItems,
-        ...(user ? userNavItems : []),
-        ...(isAdmin ? adminNavItems : [])
-    ];
-
-    // Rest of the component code...
-    const handleSearch = (e) => {
-        e.preventDefault();
-        console.log('Search query:', searchQuery);
-        setShowSearch(false);
+    const handleLogout = () => {
+        logout();
+        navigate('/');
     };
 
+    // Navigation items
+    const navItems = [
+        { name: 'Home', path: '/', icon: HomeIcon },
+        { name: 'Properties', path: '/properties', icon: BuildingOfficeIcon },
+    ];
+
+    const authNavItems = [
+        { name: 'Reservations', path: '/reservations', icon: CalendarIcon },
+        { name: 'Profile', path: '/profile', icon: UserCircleIcon },
+    ];
+
+    // Determine header class based on scroll and path
+    const isHomePage = location.pathname === '/';
+    const headerStyle = {
+        width: '100%',
+        zIndex: 9999,
+        position: 'relative',  // Changed from fixed to relative since Layout handles the positioning
+    };
+
+    // Update the header classes to ensure visibility
+    const headerClasses = `w-full transition-all duration-300 ${
+        isScrolled || !isHomePage
+        ? 'bg-white shadow-md py-2'
+        : 'bg-gray-800 bg-opacity-90 backdrop-blur-md text-white py-4'
+    }`;
+
     return (
-        <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                ? 'bg-white/80 backdrop-blur-lg shadow-lg py-4'
-                : 'bg-transparent py-6'
-                }`}
-        >
-            <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <nav className="flex items-center justify-between">
+        <header className={headerClasses} style={headerStyle}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center">
                     {/* Logo */}
-                    <Logo variant={isScrolled ? 'dark' : 'light'} />
+                    <Link to="/" className="flex items-center space-x-2">
+                        <span className={`font-bold text-xl ${
+                            isScrolled || !isHomePage ? 'text-purple-600' : 'text-white'
+                        }`}>
+                            LuxeStay
+                        </span>
+                    </Link>
 
                     {/* Desktop Navigation */}
-                    <div className="items-center hidden space-x-6 md:flex">
+                    <nav className="hidden md:flex items-center space-x-8">
                         {navItems.map((item) => (
                             <Link
-                                key={item.name}
+                                key={item.path}
                                 to={item.path}
-                                className={`relative text-sm font-medium transition-all duration-200 group ${isScrolled
-                                    ? 'text-gray-700 hover:text-purple-600'
-                                    : 'text-white/90 hover:text-white'
-                                    }`}
+                                className={`flex items-center space-x-1 font-medium ${
+                                    location.pathname === item.path
+                                        ? 'text-purple-600'
+                                        : isScrolled || !isHomePage
+                                        ? 'text-gray-700 hover:text-purple-600'
+                                        : 'text-white hover:text-purple-200'
+                                } transition-colors`}
                             >
-                                {item.name}
-                                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-200 group-hover:w-full ${location.pathname === item.path ? 'w-full' : ''
-                                    }`}></span>
+                                <item.icon className="w-5 h-5" />
+                                <span>{item.name}</span>
                             </Link>
                         ))}
-                    </div>
 
-                    {/* Desktop Actions */}
-                    <div className="items-center hidden space-x-4 md:flex">
-                        {/* Search Button */}
-                        <button
-                            onClick={() => setShowSearch(!showSearch)}
-                            className={`p-2 rounded-full transition-all duration-200 ${isScrolled
-                                ? 'hover:bg-purple-50 text-gray-600 hover:text-purple-600'
-                                : 'hover:bg-white/10 text-white/90 hover:text-white'
-                                }`}
-                        >
-                            <MagnifyingGlassIcon className="w-5 h-5" />
-                        </button>
-
-                        {/* Show these buttons only for authenticated users */}
-                        {user && (
-                            <>
-                                {/* Favorites */}
-                                <Link
-                                    to="/profile"
-                                    className={`p-2 rounded-full transition-all duration-200 ${isScrolled
-                                        ? 'hover:bg-purple-50 text-gray-600 hover:text-purple-600'
-                                        : 'hover:bg-white/10 text-white/90 hover:text-white'
-                                        }`}
-                                >
-                                    <HeartIcon className="w-5 h-5" />
-                                </Link>
-
-                                {/* Notifications */}
-                                <button
-                                    className={`p-2 rounded-full transition-all duration-200 ${isScrolled
-                                        ? 'hover:bg-purple-50 text-gray-600 hover:text-purple-600'
-                                        : 'hover:bg-white/10 text-white/90 hover:text-white'
-                                        }`}
-                                >
-                                    <BellIcon className="w-5 h-5" />
-                                </button>
-                            </>
-                        )}
-
-                        {/* Profile/Sign In Button */}
-                        {!user ? (
+                        {isAuthenticated && initialized && authNavItems.map((item) => (
                             <Link
-                                to="/login"
-                                className={`px-6 py-2.5 rounded-xl font-medium transition-all duration-200 ${isScrolled
-                                    ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg shadow-purple-200/50 hover:shadow-xl'
-                                    : 'bg-white text-purple-600 hover:bg-purple-50 shadow-lg shadow-purple-900/20 hover:shadow-xl'
-                                    }`}
+                                key={item.path}
+                                to={item.path}
+                                className={`flex items-center space-x-1 font-medium ${
+                                    location.pathname === item.path
+                                        ? 'text-purple-600'
+                                        : isScrolled || !isHomePage
+                                        ? 'text-gray-700 hover:text-purple-600'
+                                        : 'text-white hover:text-purple-200'
+                                } transition-colors`}
                             >
-                                Sign In
+                                <item.icon className="w-5 h-5" />
+                                <span>{item.name}</span>
                             </Link>
-                        ) : (
-                            <Link
-                                to="/profile"
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200 ${isScrolled
-                                    ? 'bg-purple-50 text-purple-600 hover:bg-purple-100'
-                                    : 'bg-white/10 text-white hover:bg-white/20'
-                                    }`}
-                            >
-                                <UserIcon className="w-5 h-5" />
-                                {user.name}
-                            </Link>
+                        ))}
+
+                        {/* Auth buttons */}
+                        {initialized && (
+                            isAuthenticated ? (
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                                        className={`flex items-center space-x-2 ${
+                                            isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
+                                        }`}
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                                            <UserCircleIcon className="w-6 h-6 text-purple-600" />
+                                        </div>
+                                        <span className="font-medium">{user?.name}</span>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {isProfileMenuOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: 10 }}
+                                                className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50"
+                                            >
+                                                <div className="px-4 py-2 border-b border-gray-100">
+                                                    <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                                                    <p className="text-xs text-gray-500">{user?.email}</p>
+                                                </div>
+                                                <Link
+                                                    to="/profile"
+                                                    className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                                                >
+                                                    Profile
+                                                </Link>
+                                                <Link
+                                                    to="/reservations"
+                                                    className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                                                >
+                                                    Reservations
+                                                </Link>
+                                                <button
+                                                    onClick={handleLogout}
+                                                    className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                                                >
+                                                    Logout
+                                                </button>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            ) : (
+                                <div className="flex items-center space-x-4">
+                                    <Link
+                                        to="/login"
+                                        className={`font-medium ${
+                                            isScrolled || !isHomePage
+                                                ? 'text-gray-700 hover:text-purple-600'
+                                                : 'text-white hover:text-purple-200'
+                                        } transition-colors`}
+                                    >
+                                        Login
+                                    </Link>
+                                    <Link
+                                        to="/register"
+                                        className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                                    >
+                                        Register
+                                    </Link>
+                                </div>
+                            )
                         )}
-                    </div>
+                    </nav>
 
                     {/* Mobile Menu Button */}
                     <button
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="p-2 rounded-lg md:hidden"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        className="md:hidden text-gray-700"
                     >
-                        {isMobileMenuOpen ? (
-                            <XMarkIcon className={`w-6 h-6 ${isScrolled ? 'text-gray-900' : 'text-white'}`} />
+                        {isMenuOpen ? (
+                            <XMarkIcon className="w-6 h-6" />
                         ) : (
-                            <Bars3Icon className={`w-6 h-6 ${isScrolled ? 'text-gray-900' : 'text-white'}`} />
+                            <Bars3Icon className={`w-6 h-6 ${
+                                isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
+                            }`} />
                         )}
                     </button>
-                </nav>
+                </div>
+            </div>
 
-                {/* Search Bar */}
-                <AnimatePresence>
-                    {showSearch && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute left-0 right-0 px-4 mt-4 top-full"
-                        >
-                            <form onSubmit={handleSearch} className="max-w-3xl mx-auto">
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder="Search properties, locations..."
-                                        className="w-full px-6 py-4 pr-12 bg-white border border-gray-100 shadow-lg rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
-                                    <button
-                                        type="submit"
-                                        className="absolute p-2 text-gray-400 transition-colors -translate-y-1/2 right-2 top-1/2 hover:text-purple-600"
-                                    >
-                                        <MagnifyingGlassIcon className="w-6 h-6" />
-                                    </button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Mobile Menu */}
-                <AnimatePresence>
-                    {isMobileMenuOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="mt-4 md:hidden"
-                        >
-                            <div className="p-4 space-y-4 shadow-lg rounded-2xl bg-white/90 backdrop-blur-lg">
-                                {/* Mobile Navigation */}
+            {/* Mobile Menu */}
+            <AnimatePresence>
+                {isMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="md:hidden bg-white border-t border-gray-100 shadow-lg"
+                    >
+                        <div className="max-w-7xl mx-auto px-4 py-4">
+                            <nav className="flex flex-col space-y-3">
                                 {navItems.map((item) => (
                                     <Link
-                                        key={item.name}
+                                        key={item.path}
                                         to={item.path}
-                                        className={`block px-4 py-2 text-gray-700 rounded-lg hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200 ${location.pathname === item.path ? 'bg-purple-50 text-purple-600' : ''
-                                            }`}
-                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={`flex items-center space-x-2 p-2 rounded-lg ${
+                                            location.pathname === item.path
+                                                ? 'bg-purple-50 text-purple-600'
+                                                : 'text-gray-700 hover:bg-gray-50'
+                                        }`}
                                     >
-                                        {item.name}
+                                        <item.icon className="w-5 h-5" />
+                                        <span>{item.name}</span>
                                     </Link>
                                 ))}
 
-                                {/* Mobile Actions */}
-                                {user && (
-                                    <div className="grid grid-cols-2 gap-4 px-4 pt-4 border-t border-gray-100">
-                                        <Link 
-                                            to="/profile" 
-                                            className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 rounded-lg hover:bg-purple-50 hover:text-purple-600"
-                                            onClick={() => setIsMobileMenuOpen(false)}
+                                {isAuthenticated && initialized && authNavItems.map((item) => (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        className={`flex items-center space-x-2 p-2 rounded-lg ${
+                                            location.pathname === item.path
+                                                ? 'bg-purple-50 text-purple-600'
+                                                : 'text-gray-700 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <item.icon className="w-5 h-5" />
+                                        <span>{item.name}</span>
+                                    </Link>
+                                ))}
+                                
+                                {initialized && (
+                                    isAuthenticated ? (
+                                        <button
+                                            onClick={handleLogout}
+                                            className="flex items-center space-x-2 p-2 rounded-lg text-left text-gray-700 hover:bg-gray-50 w-full"
                                         >
-                                            <HeartIcon className="w-5 h-5" />
-                                            Favorites
-                                        </Link>
-                                        <button className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 rounded-lg hover:bg-purple-50 hover:text-purple-600">
-                                            <BellIcon className="w-5 h-5" />
-                                            Notifications
+                                            <XMarkIcon className="w-5 h-5" />
+                                            <span>Logout</span>
                                         </button>
-                                    </div>
+                                    ) : (
+                                        <div className="flex flex-col space-y-2 pt-2 border-t border-gray-100">
+                                            <Link
+                                                to="/login"
+                                                className="bg-white text-purple-600 border border-purple-600 px-4 py-2 rounded-lg font-medium text-center"
+                                            >
+                                                Login
+                                            </Link>
+                                            <Link
+                                                to="/register"
+                                                className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium text-center"
+                                            >
+                                                Register
+                                            </Link>
+                                        </div>
+                                    )
                                 )}
-
-                                {/* Sign In Button for Mobile */}
-                                {!user ? (
-                                    <Link
-                                        to="/login"
-                                        className={`w-full px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 shadow-lg shadow-purple-200/50`}
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        Sign In
-                                    </Link>
-                                ) : (
-                                    <Link
-                                        to="/profile"
-                                        className={`w-full px-4 py-2.5 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors duration-200 shadow-lg shadow-purple-200/50`}
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        <span className="flex items-center justify-center gap-2">
-                                            <UserIcon className="w-5 h-5" />
-                                            {user.name}
-                                        </span>
-                                    </Link>
-                                )}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
+                            </nav>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </header>
     );
 }

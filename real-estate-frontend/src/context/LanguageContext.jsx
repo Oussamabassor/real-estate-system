@@ -1,44 +1,26 @@
-import React, { createContext, useContext, useState } from 'react';
-import { fr } from '../translations/fr';
+import { createContext, useContext } from 'react';
 
-const LanguageContext = createContext();
+// Create a simplified context without translations
+const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
-    const [language, setLanguage] = useState('fr');
+  // Simple t function that just returns the key
+  const t = (key) => {
+    return key.split('.').pop(); // Just return the last part of the key as a fallback
+  };
 
-    const translations = {
-        fr
-    };
-
-    const t = (key) => {
-        const keys = key.split('.');
-        let value = translations[language];
-
-        for (const k of keys) {
-            value = value?.[k];
-            if (!value) return key;
-        }
-
-        return value;
-    };
-
-    const value = {
-        language,
-        setLanguage,
-        t
-    };
-
-    return (
-        <LanguageContext.Provider value={value}>
-            {children}
-        </LanguageContext.Provider>
-    );
+  return (
+    <LanguageContext.Provider value={{ t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
 }
 
+// Hook to use language context
 export function useLanguage() {
-    const context = useContext(LanguageContext);
-    if (!context) {
-        throw new Error('useLanguage must be used within a LanguageProvider');
-    }
-    return context;
-} 
+  const context = useContext(LanguageContext);
+  if (context === null) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+}
