@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
+import { Helmet } from 'react-helmet-async';
+import { useAuth } from '../hooks'; // Updated import path
 import Layout from '../components/Layout';
 import { LockClosedIcon } from '@heroicons/react/24/outline';
 

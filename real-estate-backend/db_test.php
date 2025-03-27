@@ -9,7 +9,7 @@ echo "=======================\n\n";
 $config = [
     'host' => 'localhost',
     'username' => 'root',
-    'password' => 'MSFadmin2005.', // Note the period at the end
+    'password' => '', // Empty password for default XAMPP installation
     'database' => 'real-estate',
     'charset' => 'utf8mb4',
     'port' => 3306
